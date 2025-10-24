@@ -14,6 +14,14 @@ import { ref, computed } from 'vue'
     </div>
 
     <div class="kanban-board__columns"></div>
+
+    <div class="kanban-board__error">
+      <button>x</button>
+      <span
+        >Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus impedit doloremque
+        placeat!</span
+      >
+    </div>
   </div>
 </template>
 
@@ -72,6 +80,9 @@ import { ref, computed } from 'vue'
   }
 
   &__error {
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
     position: fixed;
     top: 20px;
     right: 20px;
@@ -80,6 +91,23 @@ import { ref, computed } from 'vue'
     color: white;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    button {
+      width: fit-content;
+      background: transparent;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      align-self: flex-end;
+      margin-bottom: 0.5rem;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+
+    span {
+      font-size: 1.125rem;
+    }
   }
 }
 

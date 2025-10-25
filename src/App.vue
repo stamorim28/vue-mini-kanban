@@ -8,4 +8,6 @@ import KanbanBoard from './views/KanbanBoard.vue'
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss">
+@import '@/assets/scss/reset.scss';
+</style>

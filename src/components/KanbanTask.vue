@@ -25,6 +25,38 @@ import { ref, computed } from 'vue'
         </div>
       </div>
     </div>
+
+    <div class="kanban-task__modal">
+      <div class="kanban-task__modal-content">
+        <h3>Editar</h3>
+
+        <form>
+          <div class="kanban-task__form-group">
+            <label>Título:</label>
+            <input type="text" required class="kanban-task__input" />
+          </div>
+
+          <div class="kanban-task__form-group">
+            <label>Descrição:</label>
+            <textarea rows="3" class="kanban-task__textarea"></textarea>
+          </div>
+
+          <div class="kanban-task__form-group">
+            <label>Prioridade:</label>
+            <select class="kanban-task__select">
+              <option value="low">Baixa</option>
+              <option value="medium">Média</option>
+              <option value="high">Alta</option>
+            </select>
+          </div>
+
+          <div class="kanban-task__modal-actions">
+            <button type="submit" class="kanban-task__save">Salvar</button>
+            <button type="button" class="kanban-task__cancel">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 

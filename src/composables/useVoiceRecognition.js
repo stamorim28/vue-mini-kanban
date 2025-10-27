@@ -70,7 +70,7 @@ export function useVoiceRecognition() {
       const formData = new FormData()
       formData.append('audio', audioBlob.value, 'voice.webm')
 
-      const response = await fetch(process.env.VUE_APP_API_URL, {
+      const response = await fetch(import.meta.env.VITE_API_URL, {
         method: 'POST',
         body: formData,
       })

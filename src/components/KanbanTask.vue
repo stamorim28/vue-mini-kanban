@@ -1,49 +1,176 @@
 <script setup>
 import { ref, computed } from 'vue'
+
+const props = defineProps({
+  task: {
+    type: Object,
+    required: true,
+  },
+  columnId: {
+    type: String,
+    required: true,
+  },
+})
+
+const emit = defineEmits(['task-updated', 'task-deleted'])
+
+const isEditing = ref(false)
+const isDragging = ref(false)
+
+const editForm = ref({
+  title: '',
+  description: '',
+  priority: 'medium',
+  columnId: 'todo',
+})
+
+const priorityLabel = computed(() => {
+  const labels = {
+    low: 'baixa',
+    medium: 'média',
+    high: 'alta',
+  }
+  return labels[props.task.priority] || 'Medium'
+})
+
+const formattedDate = computed(() => {
+  try {
+    return new Date(props.task.createdAt).toLocaleDateString('pt-BR', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  } catch {
+    return 'Data desconhecida'
+  }
+})
+
+const taskClasses = computed(() => ({
+  'kanban-task--dragging': isDragging.value,
+  [`kanban-task--${props.task.priority}`]: true,
+}))
+
+const isFormValid = computed(() => {
+  return editForm.value.title.trim().length > 0
+})
+
+const toggleEdit = () => {
+  if (!isEditing.value) {
+    editForm.value = {
+      title: props.task.title,
+      description: props.task.description,
+      priority: props.task.priority,
+      columnId: props.task.columnId,
+    }
+  }
+  isEditing.value = !isEditing.value
+}
+
+const saveEdit = () => {
+  if (!isFormValid.value) return
+
+  const updates = { ...editForm.value }
+
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] === props.task[key]) {
+      delete updates[key]
+    }
+  })
+
+  if (Object.keys(updates).length > 0) {
+    emit('task-updated', {
+      taskId: props.task.id,
+      updates,
+    })
+  }
+
+  isEditing.value = false
+}
+
+const cancelEdit = () => {
+  isEditing.value = false
+}
+
+const handleDelete = () => {
+  if (confirm('Are you sure you want to delete this task?')) {
+    emit('task-deleted', props.task.id)
+  }
+}
+
+const handleDragStart = (event) => {
+  isDragging.value = true
+  const data = {
+    taskId: props.task.id,
+    fromColumnId: props.columnId,
+  }
+  event.dataTransfer.setData('application/json', JSON.stringify(data))
+  event.dataTransfer.effectAllowed = 'move'
+
+  // Efeito visual de drag
+  setTimeout(() => {
+    event.target.style.opacity = '0.4'
+  }, 0)
+}
+
+const handleDragEnd = (event) => {
+  isDragging.value = false
+  event.target.style.opacity = '1'
+}
 </script>
 
 <template>
   <div>
-    <div class="kanban-task">
+    <div
+      class="kanban-task"
+      :class="taskClasses"
+      draggable="true"
+      @dragstart="handleDragStart"
+      @dragend="handleDragEnd"
+    >
       <div class="kanban-task__header">
-        <h4 class="kanban-task__title">Título</h4>
+        <div class="kanban-task__title" v-html="task.title"></div>
         <div class="kanban-task__actions">
-          <button class="kanban-task__edit" title="Editar">✏️</button>
-          <button class="kanban-task__delete" title="Deletar">🗑️</button>
+          <button class="kanban-task__edit" @click="toggleEdit" title="Editar">✏️</button>
+          <button class="kanban-task__delete" @click="handleDelete" title="Deletar">🗑️</button>
         </div>
       </div>
 
       <div class="kanban-task__content">
-        <p class="kanban-task__description">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis odio suscipit hic earum
-          qui labore reprehenderit facere deserunt id animi.
-        </p>
+        <div class="kanban-task__description" v-html="task.description"></div>
 
         <div class="kanban-task__meta">
-          <span class="kanban-task__priority"> ALTA </span>
-          <span class="kanban-task__date"> 21/12/1999 </span>
+          <span class="kanban-task__priority" :class="`kanban-task__priority--${task.priority}`">
+            {{ priorityLabel }}
+          </span>
+          <span class="kanban-task__date">
+            {{ formattedDate }}
+          </span>
         </div>
       </div>
     </div>
 
-    <div class="kanban-task__modal">
+    <div v-if="isEditing" class="kanban-task__modal">
       <div class="kanban-task__modal-content">
         <h3>Editar</h3>
 
-        <form>
+        <form @submit.prevent="saveEdit">
           <div class="kanban-task__form-group">
             <label>Título:</label>
-            <input type="text" required class="kanban-task__input" />
+            <input v-model="editForm.title" type="text" required class="kanban-task__input" />
           </div>
 
           <div class="kanban-task__form-group">
             <label>Descrição:</label>
-            <textarea rows="3" class="kanban-task__textarea"></textarea>
+            <textarea
+              v-model="editForm.description"
+              rows="3"
+              class="kanban-task__textarea"
+            ></textarea>
           </div>
 
           <div class="kanban-task__form-group">
             <label>Prioridade:</label>
-            <select class="kanban-task__select">
+            <select v-model="editForm.priority" class="kanban-task__select">
               <option value="low">Baixa</option>
               <option value="medium">Média</option>
               <option value="high">Alta</option>
@@ -52,7 +179,7 @@ import { ref, computed } from 'vue'
 
           <div class="kanban-task__modal-actions">
             <button type="submit" class="kanban-task__save">Salvar</button>
-            <button type="button" class="kanban-task__cancel">Cancelar</button>
+            <button type="button" @click="cancelEdit" class="kanban-task__cancel">Cancelar</button>
           </div>
         </form>
       </div>

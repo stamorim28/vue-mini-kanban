@@ -1,4 +1,6 @@
 import { indexedDB } from '@/composables/useIndexedDB'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
 export default {
   async initializeStore() {
@@ -15,6 +17,14 @@ export default {
       }
     } catch (error) {
       console.error('Error initializing store:', error)
+      toast.error('Não foi possível carregar suas tarefas.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
     }
   },
 
@@ -51,9 +61,25 @@ export default {
       })
 
       console.log('✅ Task salva com sucesso!')
+      toast.success('Tarefa salva com sucesso!', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
       return newTask
     } catch (error) {
       console.error('❌ Erro ao adicionar task:', error)
+      toast.error('Não foi possível salvar sua tarefa.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
       this.error = error.message
       throw error
     } finally {
@@ -107,9 +133,26 @@ export default {
       })
 
       console.log('✅ Task atualizada e salva com sucesso!')
+      toast.success('Tarefa atualizada com sucesso!', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
+
       return updatedTask
     } catch (error) {
       console.error('❌ Erro ao atualizar task:', error)
+      toast.error('Não foi possível atualizar sua tarefa.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
       this.error = error.message
       throw error
     } finally {
@@ -171,8 +214,24 @@ export default {
       })
 
       console.log('✅ Task movida e salva com sucesso!')
+      toast.success('Tarefa movida com sucesso!', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
     } catch (error) {
       console.error('❌ Erro ao mover task:', error)
+      toast.error('Não foi possível mover sua tarefa.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
       this.error = error.message
       throw error
     }
@@ -202,8 +261,24 @@ export default {
       })
 
       console.log('✅ Task deletada e salva com sucesso!')
+      toast.success('Tarefa deletada e salva com sucesso!', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
     } catch (error) {
       console.error('❌ Erro ao deletar task:', error)
+      toast.error('Não foi possível deletar sua tarefa.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
       this.error = error.message
       throw error
     } finally {

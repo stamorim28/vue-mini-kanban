@@ -57,6 +57,13 @@ export function useVoiceRecognition() {
     }
   }
 
+  const clearAudio = () => {
+    audioBlob.value = null
+    audioChunks.value = []
+    transcript.value = ''
+    console.log('%c🧹 Áudio limpo', 'color: orange; font-weight: bold;')
+  }
+
   const transcribeAndGenerateTask = async () => {
     if (!audioBlob.value) {
       alert('Nenhum áudio gravado para enviar.')
@@ -106,8 +113,10 @@ export function useVoiceRecognition() {
     isProcessing,
     transcript,
     recordingTimeLeft,
+    audioBlob,
     startRecording,
     stopRecording,
     transcribeAndGenerateTask,
+    clearAudio,
   }
 }

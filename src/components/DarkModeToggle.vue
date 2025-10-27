@@ -1,5 +1,6 @@
 <script setup>
 import { useKanbanStore } from '@/stores'
+import { MoonIcon, SunIcon } from '@heroicons/vue/24/solid'
 
 const store = useKanbanStore()
 </script>
@@ -10,9 +11,8 @@ const store = useKanbanStore()
     class="dark-mode-toggle"
     :class="{ 'dark-mode-toggle--active': store.darkMode }"
   >
-    <span class="dark-mode-toggle__icon">
-      {{ store.darkMode ? '🌙' : '☀️' }}
-    </span>
+    <MoonIcon v-if="store.darkMode" style="height: 25px" />
+    <SunIcon v-if="!store.darkMode" style="height: 25px" />
   </button>
 </template>
 

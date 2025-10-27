@@ -1,16 +1,88 @@
 <script setup>
 import { ref } from 'vue'
+import KanbanTask from '@/components/KanbanTask.vue'
+
+const props = defineProps({
+  column: {
+    type: Object,
+    required: true,
+  },
+})
+
+const emit = defineEmits(['task-moved', 'task-updated', 'task-deleted'])
+
+const isDragOver = ref(false)
+
+const handleDragOver = (event) => {
+  event.preventDefault()
+  isDragOver.value = true
+}
+
+const handleDragEnter = (event) => {
+  event.preventDefault()
+  isDragOver.value = true
+}
+
+const handleDragLeave = (event) => {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    isDragOver.value = false
+  }
+}
+
+const handleDrop = (event) => {
+  event.preventDefault()
+  isDragOver.value = false
+
+  try {
+    const data = JSON.parse(event.dataTransfer.getData('application/json'))
+
+    if (data.fromColumnId !== props.column.id) {
+      emit('task-moved', {
+        taskId: data.taskId,
+        fromColumnId: data.fromColumnId,
+        toColumnId: props.column.id,
+      })
+    }
+  } catch (error) {
+    console.error('Error processing drop:', error)
+  }
+}
+
+const handleTaskUpdate = ({ taskId, updates }) => {
+  emit('task-updated', { taskId, updates })
+}
+
+const handleTaskDelete = (taskId) => {
+  emit('task-deleted', taskId)
+}
 </script>
 
 <template>
   <div class="kanban-column">
     <div class="kanban-column__header">
-      <h3 class="kanban-column__title">Titulo</h3>
-      <span class="kanban-column__count">3</span>
+      <h3 class="kanban-column__title">{{ column.title }}</h3>
+      <span class="kanban-column__count">{{ column.tasks.length }}</span>
     </div>
 
-    <div class="kanban-column__tasks">
-      <div class="kanban-column__drop-zone">Solte aqui</div>
+    <div
+      class="kanban-column__tasks"
+      @drop="handleDrop"
+      @dragover="handleDragOver"
+      @dragenter="handleDragEnter"
+      @dragleave="handleDragLeave"
+    >
+      <KanbanTask
+        v-for="task in column.tasks"
+        :key="task.id"
+        :task="task"
+        :column-id="column.id"
+        @task-updated="handleTaskUpdate"
+        @task-deleted="handleTaskDelete"
+      />
+      <div v-if="isDragOver" class="kanban-column__drop-zone">Solte aqui</div>
+      <div v-if="column.tasks.length === 0 && !isDragOver" class="kanban-column__empty">
+        Nenhuma tarefa nesta coluna.
+      </div>
     </div>
   </div>
 </template>
@@ -76,6 +148,17 @@ import { ref } from 'vue'
     color: #007bff;
     background: rgba(0, 123, 255, 0.1);
     font-weight: 600;
+  }
+
+  &__empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-style: italic;
+
+    .dark-mode & {
+      color: #666;
+    }
   }
 }
 

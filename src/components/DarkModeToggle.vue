@@ -1,29 +1,20 @@
+<script setup>
+import { useKanbanStore } from '@/stores'
+
+const store = useKanbanStore()
+</script>
+
 <template>
   <button
-    @click="toggleDarkMode"
+    @click="store.toggleDarkMode()"
     class="dark-mode-toggle"
-    :class="{ 'dark-mode-toggle--active': modelValue }"
+    :class="{ 'dark-mode-toggle--active': store.darkMode }"
   >
     <span class="dark-mode-toggle__icon">
-      {{ modelValue ? '🌙' : '☀️' }}
+      {{ store.darkMode ? '🌙' : '☀️' }}
     </span>
   </button>
 </template>
-
-<script setup>
-const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true,
-  },
-})
-
-const emit = defineEmits(['update:modelValue'])
-
-const toggleDarkMode = () => {
-  emit('update:modelValue', !props.modelValue)
-}
-</script>
 
 <style lang="scss" scoped>
 .dark-mode-toggle {

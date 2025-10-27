@@ -1,149 +1,314 @@
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useVoiceRecognition } from '@/composables/useVoiceRecognition'
+
+const emit = defineEmits(['task-created'])
+
+const {
+  isRecording,
+  isProcessing,
+  transcript,
+  recordingTimeLeft,
+  startRecording,
+  stopRecording,
+  transcribeAndGenerateTask,
+} = useVoiceRecognition()
+
+const handleRecordClick = async () => {
+  if (!isRecording.value) {
+    await startRecording()
+  } else {
+    stopRecording()
+  }
+}
+
+const handleGenerate = async () => {
+  const task = await transcribeAndGenerateTask()
+  if (task) emit('task-created', task)
+}
+
+const recordButtonClasses = computed(() => ({
+  'voice-input__record-btn': true,
+  'voice-input__record-btn--recording': isRecording.value,
+  'voice-input__record-btn--idle': !isRecording.value,
+}))
+
+const processButtonClasses = computed(() => ({
+  'voice-input__process-btn': true,
+  'voice-input__process-btn--hidden': isRecording.value || isProcessing.value,
+}))
+
+const transcriptClasses = computed(() => ({
+  'voice-input__transcript': true,
+  'voice-input__transcript--visible': transcript.value,
+}))
+
+const processingClasses = computed(() => ({
+  'voice-input__processing': true,
+  'voice-input__processing--visible': isProcessing.value,
+}))
 </script>
 
 <template>
   <div class="voice-input">
-    <button class="voice-input__button">
-      <span>🎤</span>
-      <span>🔴</span>
-    </button>
+    <div class="voice-input__controls">
+      <button :class="recordButtonClasses" @click="handleRecordClick" :disabled="isProcessing">
+        <span class="voice-input__record-icon">
+          {{ isRecording ? '🛑' : '🎤' }}
+        </span>
+        <span class="voice-input__record-text">
+          {{ isRecording ? `Parar (${recordingTimeLeft}s)` : 'Gravar voz' }}
+        </span>
+      </button>
 
-    <div class="voice-input__transcript">
-      <div class="voice-input__actions">
-        <button class="voice-input__confirm">Criar tarefa</button>
-      </div>
+      <button :class="processButtonClasses" @click="handleGenerate" :disabled="isProcessing">
+        <span class="voice-input__process-icon">✨</span>
+        <span class="voice-input__process-text">Enviar e criar tarefa</span>
+      </button>
     </div>
 
-    <div class="voice-input__error">Erro: Seu navegador não suporta reconhecimento de voz.</div>
+    <div :class="processingClasses">
+      <span class="voice-input__processing-spinner">⏳</span>
+      <span class="voice-input__processing-text">Processando áudio...</span>
+    </div>
+
+    <div :class="transcriptClasses">
+      <strong class="voice-input__transcript-label">Transcrição:</strong>
+      <span class="voice-input__transcript-text">{{ transcript }}</span>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .voice-input {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-  &__button {
-    padding: 10px 15px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
+  .dark-mode & {
+    background: #2d2d2d;
+  }
+
+  &__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    @media (min-width: 480px) {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  &__record-btn {
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    justify-content: center;
 
-    &:hover:not(:disabled) {
-      background: #0056b3;
+    &--idle {
+      background: #007bff;
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: #0056b3;
+        transform: translateY(-1px);
+      }
     }
 
-    &:disabled {
-      background: #6c757d;
-      cursor: not-allowed;
-    }
-
-    &--listening {
+    &--recording {
       background: #dc3545;
-      animation: pulse 1.5s infinite;
+      color: #fff;
+      animation: voice-input__pulse 1.5s infinite;
 
-      &:hover {
+      &:hover:not(:disabled) {
         background: #c82333;
       }
     }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
   }
 
-  &__transcript {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 10px;
-    padding: 15px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+  &__record-icon {
+    font-size: 1.1rem;
+  }
 
-    .dark-mode & {
-      background: #2d2d2d;
-      color: white;
+  &__record-text {
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  &__process-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    background: #28a745;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    justify-content: center;
+
+    &:hover:not(:disabled) {
+      background: #218838;
+      transform: translateY(-1px);
     }
 
-    p {
-      margin: 0 0 10px 0;
-      font-style: italic;
-      color: #666;
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
 
-      .dark-mode & {
-        color: #ccc;
+    &--hidden {
+      display: none;
+    }
+
+    @media (min-width: 480px) {
+      &--hidden {
+        display: flex;
       }
     }
   }
 
-  &__actions {
-    display: flex;
-    gap: 10px;
+  &__process-icon {
+    font-size: 1.1rem;
   }
 
-  &__confirm,
-  &__cancel {
-    padding: 8px 16px;
-    border: none;
+  &__process-text {
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  &__processing {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
     border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
+    color: #856404;
 
-  &__confirm {
-    background: #28a745;
-    color: white;
+    .dark-mode & {
+      background: #332701;
+      border-color: #665200;
+      color: #f1c40f;
+    }
 
-    &:hover {
-      background: #218838;
+    &--visible {
+      display: flex;
     }
   }
 
-  &__cancel {
-    background: #6c757d;
-    color: white;
+  &__processing-spinner {
+    font-size: 1rem;
+  }
 
-    &:hover {
-      background: #545b62;
+  &__processing-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  &__transcript {
+    display: none;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #007bff;
+
+    .dark-mode & {
+      background: #3d3d3d;
+      border-left-color: #0056b3;
+    }
+
+    &--visible {
+      display: block;
     }
   }
 
-  &__error {
-    margin-top: 5px;
-    color: #dc3545;
+  &__transcript-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.875rem;
+    color: #495057;
+
+    .dark-mode & {
+      color: #ccc;
+    }
+  }
+
+  &__transcript-text {
     font-size: 0.9rem;
+    line-height: 1.4;
+    color: #212529;
+
+    .dark-mode & {
+      color: #fff;
+    }
   }
 }
 
-@keyframes pulse {
+// Animação para o botão de gravação
+@keyframes voice-input__pulse {
   0% {
-    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
   }
-  50% {
-    opacity: 0.7;
+  70% {
+    box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
   }
   100% {
-    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
   }
 }
 
-@media (max-width: 768px) {
+// Responsividade
+@media (max-width: 479px) {
   .voice-input {
-    &__transcript {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 300px;
+    padding: 12px;
+
+    &__record-btn,
+    &__process-btn {
+      width: 100%;
+      min-width: auto;
+    }
+
+    &__record-text,
+    &__process-text {
+      font-size: 0.85rem;
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .voice-input {
+    &__controls {
+      flex-direction: row;
+    }
+
+    &__process-btn {
+      &--hidden {
+        display: flex;
+      }
     }
   }
 }

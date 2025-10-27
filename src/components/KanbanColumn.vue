@@ -125,7 +125,7 @@ const handleTaskDelete = (taskId) => {
 
   &__count {
     background: #007bff;
-    color: white;
+    color: #fff;
     border-radius: 12px;
     padding: 4px 8px;
     font-size: 0.875rem;

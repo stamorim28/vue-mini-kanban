@@ -36,12 +36,15 @@ onMounted(() => {
     <div class="kanban-board__header">
       <h1 class="kanban-board__title">Vue Mini Kanban</h1>
       <div class="kanban-board__controls">
-        <VoiceInput @task-created="handleTaskCreated" />
         <DarkModeToggle v-model="darkMode" />
-        <div class="kanban-board__stats">
+        <!-- <div class="kanban-board__stats">
           <span>Progresso: {{ store.progressPercentage || 0 }}%</span>
-        </div>
+        </div> -->
       </div>
+    </div>
+
+    <div class="kanban-board__voice-input">
+      <VoiceInput @task-created="handleTaskCreated" />
     </div>
 
     <div v-if="store.isLoading" class="kanban-board__loading">Loading...</div>
@@ -80,15 +83,21 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 1rem;
     padding: 20px;
-    background: white;
+    background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     .dark-mode & {
       background: #2d2d2d;
     }
+  }
+
+  &__voice-input {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
   }
 
   &__title {
@@ -127,7 +136,7 @@ onMounted(() => {
     right: 20px;
     padding: 15px;
     background: #ff4757;
-    color: white;
+    color: #fff;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useVoiceRecognition } from '@/composables/useVoiceRecognition'
 import { MicrophoneIcon, TrashIcon, XMarkIcon, PlusIcon } from '@heroicons/vue/24/solid'
+import { SemipolarSpinner } from 'epic-spinners'
 
 const emit = defineEmits(['task-created'])
 
@@ -57,11 +58,6 @@ const processButtonClasses = computed(() => ({
 const transcriptClasses = computed(() => ({
   'voice-input__transcript': true,
   'voice-input__transcript--visible': transcript.value,
-}))
-
-const processingClasses = computed(() => ({
-  'voice-input__processing': true,
-  'voice-input__processing--visible': isProcessing.value,
 }))
 
 const handleRecordClick = async () => {
@@ -125,6 +121,7 @@ watch(showModal, (newValue) => {
 
         <div class="voice-input__modal-body">
           <button
+            v-if="!isProcessing"
             :class="recordButtonClasses"
             @click="handleRecordClick"
             :disabled="recordButtonDisabled"
@@ -137,7 +134,12 @@ watch(showModal, (newValue) => {
               {{ isRecording ? `${recordingTimeLeft}s` : '' }}
             </span>
           </button>
-          <div v-if="hasStoredAudio" class="voice-input__audio-info">
+          <div v-if="isProcessing" class="voice-input__modal-body--loading">
+            <SemipolarSpinner :animation-duration="3000" :size="120" :color="'#007bff'" />
+            <span>Seu áudio está sendo enviado, aguarde...</span>
+          </div>
+
+          <div v-if="hasStoredAudio && !isProcessing" class="voice-input__audio-info">
             <div class="voice-input__file-size">
               <strong>Tamanho do arquivo:</strong> {{ fileSize }}
             </div>
@@ -151,17 +153,13 @@ watch(showModal, (newValue) => {
           </div>
           <div class="voice-input__controls">
             <button
+              v-if="!isProcessing"
               :class="processButtonClasses"
               @click="handleGenerate"
               :disabled="sendButtonDisabled"
             >
               <span class="voice-input__process-text">Enviar e criar tarefa</span>
             </button>
-          </div>
-
-          <div :class="processingClasses">
-            <span class="voice-input__processing-spinner">⏳</span>
-            <span class="voice-input__processing-text">Processando áudio...</span>
           </div>
 
           <!-- Transcrição -->
@@ -232,6 +230,7 @@ watch(showModal, (newValue) => {
 }
 
 .voice-input__modal-content {
+  position: relative;
   background: #fff;
   border-radius: 8px;
   width: 90%;
@@ -239,6 +238,7 @@ watch(showModal, (newValue) => {
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
 
   .dark-mode & {
     background: #2d2d2d;
@@ -299,6 +299,19 @@ watch(showModal, (newValue) => {
   align-items: center;
   flex-direction: column;
   gap: 16px;
+
+  &--loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
+    color: #495057;
+
+    .dark-mode & {
+      color: #ccc;
+    }
+  }
 }
 
 .voice-input__controls {
@@ -461,7 +474,7 @@ watch(showModal, (newValue) => {
 }
 
 .voice-input__processing {
-  display: none;
+  // display: none;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;

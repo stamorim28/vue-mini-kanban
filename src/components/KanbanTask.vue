@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { PencilSquareIcon, TrashIcon, XMarkIcon, PlusIcon } from '@heroicons/vue/24/solid'
 
 const props = defineProps({
   task: {
@@ -16,6 +17,7 @@ const emit = defineEmits(['task-updated', 'task-deleted'])
 
 const isEditing = ref(false)
 const isDragging = ref(false)
+const showModal = ref(false)
 
 const editForm = ref({
   title: '',
@@ -116,6 +118,14 @@ const handleDragEnd = (event) => {
   isDragging.value = false
   event.target.style.opacity = '1'
 }
+
+const openModal = () => {
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+}
 </script>
 
 <template>
@@ -130,8 +140,12 @@ const handleDragEnd = (event) => {
       <div class="kanban-task__header">
         <div class="kanban-task__title" v-html="task.title"></div>
         <div class="kanban-task__actions">
-          <button class="kanban-task__edit" @click="toggleEdit" title="Editar">✏️</button>
-          <button class="kanban-task__delete" @click="handleDelete" title="Deletar">🗑️</button>
+          <button class="kanban-task__edit" @click="toggleEdit" title="Editar">
+            <PencilSquareIcon style="height: 20px" />
+          </button>
+          <button class="kanban-task__delete" @click="handleDelete" title="Deletar">
+            <TrashIcon style="height: 20px" />
+          </button>
         </div>
       </div>
 
@@ -149,40 +163,87 @@ const handleDragEnd = (event) => {
       </div>
     </div>
 
-    <div v-if="isEditing" class="kanban-task__modal">
-      <div class="kanban-task__modal-content">
-        <h3>Editar</h3>
+    <div v-if="isEditing" class="voice-input__modal">
+      <div class="voice-input__modal-content">
+        <div class="voice-input__modal-header">
+          <h3 class="voice-input__modal-title">Editar</h3>
+          <button class="voice-input__modal-close" @click="cancelEdit">
+            <XMarkIcon style="height: 25px" />
+          </button>
+        </div>
 
-        <form @submit.prevent="saveEdit">
-          <div class="kanban-task__form-group">
-            <label>Título:</label>
-            <input v-model="editForm.title" type="text" required class="kanban-task__input" />
-          </div>
+        <div class="voice-input__modal-body">
+          <form @submit.prevent="saveEdit">
+            <div class="kanban-task__form-group">
+              <label>Título:</label>
+              <input v-model="editForm.title" type="text" required class="kanban-task__input" />
+            </div>
 
-          <div class="kanban-task__form-group">
-            <label>Descrição:</label>
-            <textarea
-              v-model="editForm.description"
-              rows="3"
-              class="kanban-task__textarea"
-            ></textarea>
-          </div>
+            <div class="kanban-task__form-group">
+              <label>Descrição:</label>
+              <textarea
+                v-model="editForm.description"
+                rows="3"
+                class="kanban-task__textarea"
+              ></textarea>
+            </div>
 
-          <div class="kanban-task__form-group">
-            <label>Prioridade:</label>
-            <select v-model="editForm.priority" class="kanban-task__select">
-              <option value="low">Baixa</option>
-              <option value="medium">Média</option>
-              <option value="high">Alta</option>
-            </select>
-          </div>
+            <div class="kanban-task__form-group">
+              <label>Prioridade:</label>
+              <select v-model="editForm.priority" class="kanban-task__select">
+                <option value="low">Baixa</option>
+                <option value="medium">Média</option>
+                <option value="high">Alta</option>
+              </select>
+            </div>
 
-          <div class="kanban-task__modal-actions">
-            <button type="submit" class="kanban-task__save">Salvar</button>
-            <button type="button" @click="cancelEdit" class="kanban-task__cancel">Cancelar</button>
-          </div>
-        </form>
+            <div class="kanban-task__modal-actions">
+              <button type="submit" class="kanban-task__save">Salvar</button>
+              <button type="button" @click="cancelEdit" class="kanban-task__cancel">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
+
+      <!-- <div v-if="isEditing" class="kanban-task__modal">
+        <div class="kanban-task__modal-content">
+          <h3>Editar</h3>
+
+          <form @submit.prevent="saveEdit">
+            <div class="kanban-task__form-group">
+              <label>Título:</label>
+              <input v-model="editForm.title" type="text" required class="kanban-task__input" />
+            </div>
+
+            <div class="kanban-task__form-group">
+              <label>Descrição:</label>
+              <textarea
+                v-model="editForm.description"
+                rows="3"
+                class="kanban-task__textarea"
+              ></textarea>
+            </div>
+
+            <div class="kanban-task__form-group">
+              <label>Prioridade:</label>
+              <select v-model="editForm.priority" class="kanban-task__select">
+                <option value="low">Baixa</option>
+                <option value="medium">Média</option>
+                <option value="high">Alta</option>
+              </select>
+            </div>
+
+            <div class="kanban-task__modal-actions">
+              <button type="submit" class="kanban-task__save">Salvar</button>
+              <button type="button" @click="cancelEdit" class="kanban-task__cancel">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -260,13 +321,19 @@ const handleDragEnd = (event) => {
     padding: 4px;
     border-radius: 3px;
     font-size: 0.875rem;
+    color: #666;
 
     &:hover {
       background: rgba(0, 0, 0, 0.1);
     }
 
+    .dark-mode & {
+      color: #fff;
+    }
+
     .dark-mode &:hover {
       background: rgba(255, 255, 255, 0.1);
+      color: #fff;
     }
   }
 
@@ -322,39 +389,39 @@ const handleDragEnd = (event) => {
     }
   }
 
-  &__modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
+  // &__modal {
+  //   position: fixed;
+  //   top: 0;
+  //   left: 0;
+  //   right: 0;
+  //   bottom: 0;
+  //   background: rgba(0, 0, 0, 0.5);
+  //   display: flex;
+  //   justify-content: center;
+  //   align-items: center;
+  //   z-index: 1000;
+  // }
 
-  &__modal-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
+  // &__modal-content {
+  //   background: #fff;
+  //   padding: 20px;
+  //   border-radius: 8px;
+  //   width: 90%;
+  //   max-width: 400px;
 
-    .dark-mode & {
-      background: #2d2d2d;
-      color: #fff;
-    }
+  //   .dark-mode & {
+  //     background: #2d2d2d;
+  //     color: #fff;
+  //   }
 
-    form {
-      width: 100%;
-    }
+  //   form {
+  //     width: 100%;
+  //   }
 
-    h3 {
-      margin: 0 0 16px 0;
-    }
-  }
+  //   h3 {
+  //     margin: 0 0 16px 0;
+  //   }
+  // }
 
   &__form-group {
     width: 100%;
@@ -415,6 +482,120 @@ const handleDragEnd = (event) => {
     &:hover {
       background: #545b62;
     }
+  }
+}
+
+.voice-input__modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.voice-input__modal-content {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+
+  .dark-mode & {
+    background: #2d2d2d;
+    color: #fff;
+  }
+}
+
+.voice-input__modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+
+  .dark-mode & {
+    border-bottom-color: #404040;
+  }
+}
+
+.voice-input__modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.voice-input__modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+  }
+
+  .dark-mode & {
+    color: #ccc;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+  }
+}
+
+.voice-input__modal-body {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+
+  &--loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
+    color: #495057;
+
+    .dark-mode & {
+      color: #ccc;
+    }
+  }
+
+  form {
+    width: 100%;
+  }
+}
+
+.voice-input__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (min-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }
 

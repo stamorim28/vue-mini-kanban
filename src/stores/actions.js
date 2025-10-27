@@ -39,12 +39,10 @@ export default {
       const column = this.columns.find((col) => col.id === newTask.columnId)
       if (column) {
         column.tasks.push(newTask)
-        console.log('📁 Coluna atualizada:', column)
+        console.log('📁 Coluna atualizada:', column.id)
       }
 
       console.log('💾 Salvando no IndexedDB...')
-      console.log('Columns:', this.columns)
-      console.log('Tasks:', this.tasks)
 
       await indexedDB.saveStoreData({
         columns: this.columns,
@@ -68,19 +66,37 @@ export default {
       this.isLoading = true
       this.error = null
 
+      console.log('✏️ Atualizando task:', { taskId, updates })
+
       const taskIndex = this.tasks.findIndex((task) => task.id === taskId)
-      if (taskIndex !== -1) {
-        this.tasks[taskIndex] = { ...this.tasks[taskIndex], ...updates }
+      if (taskIndex === -1) {
+        throw new Error('Task not found')
       }
 
-      if (updates.columnId) {
-        this.columns.forEach((column) => {
-          column.taskIds = column.taskIds.filter((id) => id !== taskId)
-        })
+      this.tasks[taskIndex] = { ...this.tasks[taskIndex], ...updates }
+      const updatedTask = this.tasks[taskIndex]
 
+      this.columns.forEach((column) => {
+        const taskInColumnIndex = column.tasks.findIndex((task) => task.id === taskId)
+
+        if (taskInColumnIndex !== -1) {
+          if (updates.columnId && updates.columnId !== column.id) {
+            column.tasks.splice(taskInColumnIndex, 1)
+            console.log('📤 Removido da coluna:', column.id)
+          } else {
+            column.tasks[taskInColumnIndex] = { ...column.tasks[taskInColumnIndex], ...updates }
+          }
+        }
+      })
+
+      if (updates.columnId) {
         const newColumn = this.columns.find((col) => col.id === updates.columnId)
-        if (newColumn && !newColumn.taskIds.includes(taskId)) {
-          newColumn.taskIds.push(taskId)
+        if (newColumn) {
+          const taskExists = newColumn.tasks.find((task) => task.id === taskId)
+          if (!taskExists) {
+            newColumn.tasks.push(updatedTask)
+            console.log('📥 Adicionado à nova coluna:', newColumn.id)
+          }
         }
       }
 
@@ -90,8 +106,10 @@ export default {
         darkMode: this.darkMode,
       })
 
-      return this.tasks[taskIndex]
+      console.log('✅ Task atualizada e salva com sucesso!')
+      return updatedTask
     } catch (error) {
+      console.error('❌ Erro ao atualizar task:', error)
       this.error = error.message
       throw error
     } finally {
@@ -103,18 +121,58 @@ export default {
     try {
       this.error = null
 
+      console.log('🔄 Movendo task:', { taskId, fromColumnId, toColumnId })
+      console.log('📋 Todas as tasks:', this.tasks)
+      console.log('📁 Todas as colunas:', this.columns)
+
+      let task = this.tasks.find((t) => t.id === taskId)
+
+      if (!task) {
+        for (const column of this.columns) {
+          task = column.tasks.find((t) => t.id === taskId)
+          if (task) {
+            console.log('🔍 Task encontrada na coluna:', column.id)
+            break
+          }
+        }
+      }
+
+      if (!task) {
+        console.error('❌ Task não encontrada em nenhum lugar!')
+        throw new Error('Task not found')
+      }
+
+      console.log('✅ Task encontrada:', task)
+
       const fromColumn = this.columns.find((col) => col.id === fromColumnId)
       if (fromColumn) {
-        fromColumn.taskIds = fromColumn.taskIds.filter((id) => id !== taskId)
+        fromColumn.tasks = fromColumn.tasks.filter((t) => t.id !== taskId)
+        console.log('📤 Removido da coluna:', fromColumn.id)
       }
 
       const toColumn = this.columns.find((col) => col.id === toColumnId)
-      if (toColumn && !toColumn.taskIds.includes(taskId)) {
-        toColumn.taskIds.push(taskId)
+      if (toColumn) {
+        toColumn.tasks.push({ ...task, columnId: toColumnId })
+        console.log('📥 Adicionado à coluna:', toColumn.id)
       }
 
-      await this.updateTask(taskId, { columnId: toColumnId })
+      const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
+      if (taskIndex === -1) {
+        this.tasks.push({ ...task, columnId: toColumnId })
+        console.log('➕ Task adicionada ao array central')
+      } else {
+        this.tasks[taskIndex] = { ...this.tasks[taskIndex], columnId: toColumnId }
+      }
+
+      await indexedDB.saveStoreData({
+        columns: this.columns,
+        tasks: this.tasks,
+        darkMode: this.darkMode,
+      })
+
+      console.log('✅ Task movida e salva com sucesso!')
     } catch (error) {
+      console.error('❌ Erro ao mover task:', error)
       this.error = error.message
       throw error
     }
@@ -125,10 +183,16 @@ export default {
       this.isLoading = true
       this.error = null
 
+      console.log('🗑️ Deletando task:', taskId)
+
       this.tasks = this.tasks.filter((task) => task.id !== taskId)
 
       this.columns.forEach((column) => {
-        column.taskIds = column.taskIds.filter((id) => id !== taskId)
+        const initialLength = column.tasks.length
+        column.tasks = column.tasks.filter((task) => task.id !== taskId)
+        if (initialLength !== column.tasks.length) {
+          console.log('📤 Removido da coluna:', column.id)
+        }
       })
 
       await indexedDB.saveStoreData({
@@ -136,7 +200,10 @@ export default {
         tasks: this.tasks,
         darkMode: this.darkMode,
       })
+
+      console.log('✅ Task deletada e salva com sucesso!')
     } catch (error) {
+      console.error('❌ Erro ao deletar task:', error)
       this.error = error.message
       throw error
     } finally {

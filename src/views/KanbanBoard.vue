@@ -1,26 +1,65 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { onMounted } from 'vue'
+import { useKanbanStore } from '@/stores'
+import KanbanColumn from '@/components/KanbanColumn.vue'
+import VoiceInput from '@/components/VoiceInput.vue'
+import DarkModeToggle from '@/components/DarkModeToggle.vue'
+
+const store = useKanbanStore()
+
+const handleTaskMove = ({ taskId, fromColumnId, toColumnId }) => {
+  console.log('📦 Evento task-moved recebido:', { taskId, fromColumnId, toColumnId })
+  store.moveTask(taskId, fromColumnId, toColumnId)
+}
+
+const handleTaskUpdate = ({ taskId, updates }) => {
+  console.log('✏️ Evento task-updated recebido:', { taskId, updates })
+  store.updateTask(taskId, updates)
+}
+
+const handleTaskDelete = (taskId) => {
+  console.log('🗑️ Evento task-deleted recebido:', taskId)
+  store.deleteTask(taskId)
+}
+
+const handleTaskCreated = (taskData) => {
+  store.addTask(taskData)
+}
+
+onMounted(() => {
+  store.initializeStore()
+})
 </script>
 
 <template>
-  <div class="kanban-board">
+  <div class="kanban-board" :class="{ 'dark-mode': store.darkMode }">
     <div class="kanban-board__header">
       <h1 class="kanban-board__title">Vue Mini Kanban</h1>
       <div class="kanban-board__controls">
+        <VoiceInput @task-created="handleTaskCreated" />
+        <DarkModeToggle v-model="darkMode" />
         <div class="kanban-board__stats">
-          <span>Progresso: 25%</span>
+          <span>Progresso: {{ store.progressPercentage || 0 }}%</span>
         </div>
       </div>
     </div>
 
-    <div class="kanban-board__columns"></div>
+    <div v-if="store.isLoading" class="kanban-board__loading">Loading...</div>
 
-    <div class="kanban-board__error">
-      <button>x</button>
-      <span
-        >Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus impedit doloremque
-        placeat!</span
-      >
+    <div class="kanban-board__columns">
+      <KanbanColumn
+        v-for="column in store.columns"
+        :key="column.id"
+        :column="column"
+        @task-moved="handleTaskMove"
+        @task-updated="handleTaskUpdate"
+        @task-deleted="handleTaskDelete"
+      />
+    </div>
+
+    <div v-if="store.error" class="kanban-board__error">
+      <button @click="store.clearError()">x</button>
+      <span>{{ store.error }}</span>
     </div>
   </div>
 </template>

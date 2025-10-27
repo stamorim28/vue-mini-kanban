@@ -1,41 +1,57 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useVoiceRecognition } from '@/composables/useVoiceRecognition'
+import { MicrophoneIcon, TrashIcon, XMarkIcon, PlusIcon } from '@heroicons/vue/24/solid'
 
 const emit = defineEmits(['task-created'])
+
+const showModal = ref(false)
 
 const {
   isRecording,
   isProcessing,
   transcript,
   recordingTimeLeft,
+  audioBlob,
   startRecording,
   stopRecording,
   transcribeAndGenerateTask,
+  clearAudio,
 } = useVoiceRecognition()
 
-const handleRecordClick = async () => {
-  if (!isRecording.value) {
-    await startRecording()
-  } else {
-    stopRecording()
-  }
-}
+const fileSize = computed(() => {
+  if (!audioBlob.value) return null
 
-const handleGenerate = async () => {
-  const task = await transcribeAndGenerateTask()
-  if (task) emit('task-created', task)
-}
+  const sizeInBytes = audioBlob.value.size
+  if (sizeInBytes < 1024 * 1024) {
+    return `${(sizeInBytes / 1024).toFixed(1)} KB`
+  } else {
+    return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+})
+
+const hasStoredAudio = computed(() => {
+  return audioBlob.value !== null
+})
+
+const recordButtonDisabled = computed(() => {
+  return hasStoredAudio.value || isProcessing.value
+})
+
+const sendButtonDisabled = computed(() => {
+  return !hasStoredAudio.value || isProcessing.value
+})
 
 const recordButtonClasses = computed(() => ({
   'voice-input__record-btn': true,
   'voice-input__record-btn--recording': isRecording.value,
   'voice-input__record-btn--idle': !isRecording.value,
+  'voice-input__record-btn--disabled': recordButtonDisabled.value,
 }))
 
 const processButtonClasses = computed(() => ({
   'voice-input__process-btn': true,
-  'voice-input__process-btn--hidden': isRecording.value || isProcessing.value,
+  'voice-input__process-btn--disabled': sendButtonDisabled.value,
 }))
 
 const transcriptClasses = computed(() => ({
@@ -47,224 +63,468 @@ const processingClasses = computed(() => ({
   'voice-input__processing': true,
   'voice-input__processing--visible': isProcessing.value,
 }))
+
+const handleRecordClick = async () => {
+  if (recordButtonDisabled.value) return
+
+  if (!isRecording.value) {
+    await startRecording()
+  } else {
+    stopRecording()
+  }
+}
+
+const handleGenerate = async () => {
+  if (sendButtonDisabled.value) return
+
+  const task = await transcribeAndGenerateTask()
+  if (task) {
+    emit('task-created', task)
+    closeModal()
+  }
+}
+
+const openModal = () => {
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  clearAudio()
+}
+
+const handleClearAudio = () => {
+  clearAudio()
+}
+
+watch(showModal, (newValue) => {
+  if (newValue) {
+    clearAudio()
+  }
+})
 </script>
 
 <template>
   <div class="voice-input">
-    <div class="voice-input__controls">
-      <button :class="recordButtonClasses" @click="handleRecordClick" :disabled="isProcessing">
-        <span class="voice-input__record-icon">
-          {{ isRecording ? '🛑' : '🎤' }}
-        </span>
-        <span class="voice-input__record-text">
-          {{ isRecording ? `Parar (${recordingTimeLeft}s)` : 'Gravar voz' }}
-        </span>
-      </button>
+    <button class="voice-input__open-modal-btn" @click="openModal">
+      <!-- <span class="voice-input__modal-icon"></span> -->
+      <span class="voice-input__modal-text"
+        ><PlusIcon style="height: 25px" /> Criar tarefa por voz</span
+      >
+    </button>
 
-      <button :class="processButtonClasses" @click="handleGenerate" :disabled="isProcessing">
-        <span class="voice-input__process-icon">✨</span>
-        <span class="voice-input__process-text">Enviar e criar tarefa</span>
-      </button>
-    </div>
+    <!-- Modal -->
+    <div v-if="showModal" class="voice-input__modal">
+      <div class="voice-input__modal-content">
+        <div class="voice-input__modal-header">
+          <h3 class="voice-input__modal-title">Criar tarefa por voz</h3>
+          <button class="voice-input__modal-close" @click="closeModal">
+            <XMarkIcon style="height: 25px" />
+          </button>
+        </div>
 
-    <div :class="processingClasses">
-      <span class="voice-input__processing-spinner">⏳</span>
-      <span class="voice-input__processing-text">Processando áudio...</span>
-    </div>
+        <div class="voice-input__modal-body">
+          <button
+            :class="recordButtonClasses"
+            @click="handleRecordClick"
+            :disabled="recordButtonDisabled"
+            :title="isRecording ? 'Parar gravação' : 'Iniciar gravação'"
+          >
+            <span class="voice-input__record-icon">
+              <MicrophoneIcon v-if="!isRecording" style="height: 80px" />
+            </span>
+            <span class="voice-input__record-text">
+              {{ isRecording ? `${recordingTimeLeft}s` : '' }}
+            </span>
+          </button>
+          <div v-if="hasStoredAudio" class="voice-input__audio-info">
+            <div class="voice-input__file-size">
+              <strong>Tamanho do arquivo:</strong> {{ fileSize }}
+            </div>
+            <button
+              class="voice-input__clear-audio"
+              @click="handleClearAudio"
+              :disabled="isProcessing"
+            >
+              <TrashIcon style="height: 20px" />
+            </button>
+          </div>
+          <div class="voice-input__controls">
+            <button
+              :class="processButtonClasses"
+              @click="handleGenerate"
+              :disabled="sendButtonDisabled"
+            >
+              <span class="voice-input__process-text">Enviar e criar tarefa</span>
+            </button>
+          </div>
 
-    <div :class="transcriptClasses">
-      <strong class="voice-input__transcript-label">Transcrição:</strong>
-      <span class="voice-input__transcript-text">{{ transcript }}</span>
+          <div :class="processingClasses">
+            <span class="voice-input__processing-spinner">⏳</span>
+            <span class="voice-input__processing-text">Processando áudio...</span>
+          </div>
+
+          <!-- Transcrição -->
+          <div :class="transcriptClasses">
+            <strong class="voice-input__transcript-label">Transcrição:</strong>
+            <span class="voice-input__transcript-text">{{ transcript }}</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .voice-input {
+  display: inline-block;
+
+  &__modal-text {
+    display: flex;
+    font-weight: 600;
+
+    svg {
+      margin-right: 0.25rem;
+    }
+  }
+}
+
+.voice-input__open-modal-btn {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #007bff;
+  color: #fff;
+
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+  justify-content: center;
+
+  &:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+  }
+
+  .dark-mode & {
+    background: #0056b3;
+
+    &:hover {
+      background: #004494;
+    }
+  }
+}
+
+.voice-input__modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.voice-input__modal-content {
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 
   .dark-mode & {
     background: #2d2d2d;
-  }
-
-  &__controls {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    @media (min-width: 480px) {
-      flex-direction: row;
-      align-items: center;
-    }
-  }
-
-  &__record-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 140px;
-    justify-content: center;
-
-    &--idle {
-      background: #007bff;
-      color: #fff;
-
-      &:hover:not(:disabled) {
-        background: #0056b3;
-        transform: translateY(-1px);
-      }
-    }
-
-    &--recording {
-      background: #dc3545;
-      color: #fff;
-      animation: voice-input__pulse 1.5s infinite;
-
-      &:hover:not(:disabled) {
-        background: #c82333;
-      }
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-  }
-
-  &__record-icon {
-    font-size: 1.1rem;
-  }
-
-  &__record-text {
-    font-size: 0.9rem;
-    white-space: nowrap;
-  }
-
-  &__process-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 6px;
-    background: #28a745;
     color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 140px;
-    justify-content: center;
+  }
+}
+
+.voice-input__modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+
+  .dark-mode & {
+    border-bottom-color: #404040;
+  }
+}
+
+.voice-input__modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.voice-input__modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+  }
+
+  .dark-mode & {
+    color: #ccc;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+  }
+}
+
+.voice-input__modal-body {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.voice-input__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (min-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.voice-input__record-btn {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 120px;
+  height: 120px;
+  border-radius: 100%;
+  justify-content: center;
+
+  &--idle {
+    background: #007bff;
+    color: #fff;
 
     &:hover:not(:disabled) {
-      background: #218838;
+      background: #0056b3;
       transform: translateY(-1px);
     }
+  }
 
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
+  &--recording {
+    background: #dc3545;
+    color: #fff;
+    animation: voice-input__pulse 1.5s infinite;
 
-    &--hidden {
-      display: none;
-    }
-
-    @media (min-width: 480px) {
-      &--hidden {
-        display: flex;
-      }
+    &:hover:not(:disabled) {
+      background: #c82333;
     }
   }
 
-  &__process-icon {
-    font-size: 1.1rem;
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    animation: none !important;
   }
 
-  &__process-text {
-    font-size: 0.9rem;
-    white-space: nowrap;
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.voice-input__record-icon {
+  font-size: 1.1rem;
+}
+
+.voice-input__record-text {
+  font-size: 2.5rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.voice-input__process-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #28a745;
+  color: #fff;
+
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  justify-content: center;
+  margin-top: 1rem;
+
+  &:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-1px);
   }
 
-  &__processing {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 4px;
-    color: #856404;
-
-    .dark-mode & {
-      background: #332701;
-      border-color: #665200;
-      color: #f1c40f;
-    }
-
-    &--visible {
-      display: flex;
-    }
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
   }
 
-  &__processing-spinner {
-    font-size: 1rem;
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.voice-input__process-icon {
+  font-size: 1.1rem;
+}
+
+.voice-input__process-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.voice-input__audio-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #17a2b8;
+
+  .dark-mode & {
+    background: #3d3d3d;
+    border-left-color: #138496;
+  }
+}
+
+.voice-input__file-size {
+  font-size: 0.9rem;
+  color: #495057;
+  margin-right: 1rem;
+
+  .dark-mode & {
+    color: #ccc;
+  }
+}
+
+.voice-input__clear-audio {
+  background: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 12px 5px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: #545b62;
   }
 
-  &__processing-text {
-    font-size: 0.875rem;
-    font-weight: 500;
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.voice-input__processing {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  color: #856404;
+
+  .dark-mode & {
+    background: #332701;
+    border-color: #665200;
+    color: #f1c40f;
   }
 
-  &__transcript {
-    display: none;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 4px;
-    border-left: 4px solid #007bff;
+  &--visible {
+    display: flex;
+  }
+}
 
-    .dark-mode & {
-      background: #3d3d3d;
-      border-left-color: #0056b3;
-    }
+.voice-input__processing-spinner {
+  font-size: 1rem;
+}
 
-    &--visible {
-      display: block;
-    }
+.voice-input__processing-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.voice-input__transcript {
+  display: none;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+
+  .dark-mode & {
+    background: #3d3d3d;
+    border-left-color: #0056b3;
   }
 
-  &__transcript-label {
+  &--visible {
     display: block;
-    margin-bottom: 4px;
-    font-size: 0.875rem;
-    color: #495057;
-
-    .dark-mode & {
-      color: #ccc;
-    }
   }
+}
 
-  &__transcript-text {
-    font-size: 0.9rem;
-    line-height: 1.4;
-    color: #212529;
+.voice-input__transcript-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  color: #495057;
 
-    .dark-mode & {
-      color: #fff;
-    }
+  .dark-mode & {
+    color: #ccc;
+  }
+}
+
+.voice-input__transcript-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #212529;
+
+  .dark-mode & {
+    color: #fff;
   }
 }
 
@@ -283,33 +543,32 @@ const processingClasses = computed(() => ({
 
 // Responsividade
 @media (max-width: 479px) {
-  .voice-input {
-    padding: 12px;
+  .voice-input__modal-content {
+    width: 95%;
+    margin: 20px;
+  }
 
-    &__record-btn,
-    &__process-btn {
-      width: 100%;
-      min-width: auto;
-    }
+  .voice-input__record-btn,
+  .voice-input__process-btn {
+    width: 100%;
+    min-width: auto;
+  }
 
-    &__record-text,
-    &__process-text {
-      font-size: 0.85rem;
-    }
+  .voice-input__record-text,
+  .voice-input__process-text {
+    font-size: 0.85rem;
+  }
+
+  .voice-input__audio-info {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
   }
 }
 
 @media (min-width: 768px) {
-  .voice-input {
-    &__controls {
-      flex-direction: row;
-    }
-
-    &__process-btn {
-      &--hidden {
-        display: flex;
-      }
-    }
+  .voice-input__controls {
+    flex-direction: row;
   }
 }
 </style>

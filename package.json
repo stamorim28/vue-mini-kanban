@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
+    "@vue/compiler-dom": "^3.5.22",
+    "@vue/server-renderer": "^3.5.22",
     "ai": "^5.0.79",
     "axios": "^1.12.2",
     "epic-spinners": "^2.0.0",

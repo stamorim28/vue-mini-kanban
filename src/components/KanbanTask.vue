@@ -18,6 +18,7 @@ const emit = defineEmits(['task-updated', 'task-deleted'])
 const isEditing = ref(false)
 const isDragging = ref(false)
 const showModal = ref(false)
+const modalType = ref('') // 'edit' ou 'delete'
 
 const editForm = ref({
   title: '',
@@ -87,16 +88,21 @@ const saveEdit = () => {
   }
 
   isEditing.value = false
+  closeModal()
 }
 
 const cancelEdit = () => {
   isEditing.value = false
+  closeModal()
 }
 
 const handleDelete = () => {
-  if (confirm('Are you sure you want to delete this task?')) {
-    emit('task-deleted', props.task.id)
-  }
+  openModal('delete')
+}
+
+const confirmDelete = () => {
+  emit('task-deleted', props.task.id)
+  closeModal()
 }
 
 const handleDragStart = (event) => {
@@ -119,13 +125,25 @@ const handleDragEnd = (event) => {
   event.target.style.opacity = '1'
 }
 
-const openModal = () => {
+const openModal = (type) => {
+  modalType.value = type
   showModal.value = true
+
+  if (type === 'edit') {
+    toggleEdit()
+  }
 }
 
 const closeModal = () => {
   showModal.value = false
+  modalType.value = ''
+  isEditing.value = false
 }
+
+// Título do modal baseado no tipo
+const modalTitle = computed(() => {
+  return modalType.value === 'edit' ? 'Editar Tarefa' : 'Confirmar Exclusão'
+})
 </script>
 
 <template>
@@ -140,10 +158,10 @@ const closeModal = () => {
       <div class="kanban-task__header">
         <div class="kanban-task__title" v-html="task.title"></div>
         <div class="kanban-task__actions">
-          <button class="kanban-task__edit" @click="toggleEdit" title="Editar">
+          <button class="kanban-task__edit" @click="openModal('edit')" title="Editar">
             <PencilSquareIcon style="height: 20px" />
           </button>
-          <button class="kanban-task__delete" @click="handleDelete" title="Deletar">
+          <button class="kanban-task__delete" @click="openModal('delete')" title="Deletar">
             <TrashIcon style="height: 20px" />
           </button>
         </div>
@@ -163,87 +181,70 @@ const closeModal = () => {
       </div>
     </div>
 
-    <div v-if="isEditing" class="voice-input__modal">
+    <!-- Modal para Editar e Confirmar Exclusão -->
+    <div v-if="showModal" class="voice-input__modal">
       <div class="voice-input__modal-content">
         <div class="voice-input__modal-header">
-          <h3 class="voice-input__modal-title">Editar</h3>
-          <button class="voice-input__modal-close" @click="cancelEdit">
+          <h3 class="voice-input__modal-title">{{ modalTitle }}</h3>
+          <button class="voice-input__modal-close" @click="closeModal">
             <XMarkIcon style="height: 25px" />
           </button>
         </div>
 
         <div class="voice-input__modal-body">
-          <form @submit.prevent="saveEdit">
-            <div class="kanban-task__form-group">
-              <label>Título:</label>
-              <input v-model="editForm.title" type="text" required class="kanban-task__input" />
-            </div>
+          <!-- Conteúdo do Modal de Edição -->
+          <div v-if="modalType === 'edit'">
+            <form @submit.prevent="saveEdit">
+              <div class="kanban-task__form-group">
+                <label>Título:</label>
+                <input v-model="editForm.title" type="text" required class="kanban-task__input" />
+              </div>
 
-            <div class="kanban-task__form-group">
-              <label>Descrição:</label>
-              <textarea
-                v-model="editForm.description"
-                rows="3"
-                class="kanban-task__textarea"
-              ></textarea>
-            </div>
+              <div class="kanban-task__form-group">
+                <label>Descrição:</label>
+                <textarea
+                  v-model="editForm.description"
+                  rows="3"
+                  class="kanban-task__textarea"
+                ></textarea>
+              </div>
 
-            <div class="kanban-task__form-group">
-              <label>Prioridade:</label>
-              <select v-model="editForm.priority" class="kanban-task__select">
-                <option value="low">Baixa</option>
-                <option value="medium">Média</option>
-                <option value="high">Alta</option>
-              </select>
-            </div>
+              <div class="kanban-task__form-group">
+                <label>Prioridade:</label>
+                <select v-model="editForm.priority" class="kanban-task__select">
+                  <option value="low">Baixa</option>
+                  <option value="medium">Média</option>
+                  <option value="high">Alta</option>
+                </select>
+              </div>
 
-            <div class="kanban-task__modal-actions">
-              <button type="submit" class="kanban-task__save">Salvar</button>
-              <button type="button" @click="cancelEdit" class="kanban-task__cancel">
-                Cancelar
+              <div class="kanban-task__modal-actions">
+                <button type="submit" class="kanban-task__save">Salvar</button>
+                <button type="button" @click="cancelEdit" class="kanban-task__cancel">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Conteúdo do Modal de Confirmação de Exclusão -->
+          <div v-if="modalType === 'delete'" class="delete-confirmation">
+            <div class="delete-confirmation__icon">
+              <TrashIcon style="height: 48px; color: #dc3545" />
+            </div>
+            <div class="delete-confirmation__message">
+              <p>Tem certeza que deseja excluir a tarefa <div v-html="task.title"></div>?</p>
+              <p class="delete-confirmation__warning">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="delete-confirmation__actions">
+              <button class="delete-confirmation__confirm" @click="confirmDelete">
+                Sim, Excluir
               </button>
+              <button class="delete-confirmation__cancel" @click="closeModal">Cancelar</button>
             </div>
-          </form>
+          </div>
         </div>
       </div>
-
-      <!-- <div v-if="isEditing" class="kanban-task__modal">
-        <div class="kanban-task__modal-content">
-          <h3>Editar</h3>
-
-          <form @submit.prevent="saveEdit">
-            <div class="kanban-task__form-group">
-              <label>Título:</label>
-              <input v-model="editForm.title" type="text" required class="kanban-task__input" />
-            </div>
-
-            <div class="kanban-task__form-group">
-              <label>Descrição:</label>
-              <textarea
-                v-model="editForm.description"
-                rows="3"
-                class="kanban-task__textarea"
-              ></textarea>
-            </div>
-
-            <div class="kanban-task__form-group">
-              <label>Prioridade:</label>
-              <select v-model="editForm.priority" class="kanban-task__select">
-                <option value="low">Baixa</option>
-                <option value="medium">Média</option>
-                <option value="high">Alta</option>
-              </select>
-            </div>
-
-            <div class="kanban-task__modal-actions">
-              <button type="submit" class="kanban-task__save">Salvar</button>
-              <button type="button" @click="cancelEdit" class="kanban-task__cancel">
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </div>
-      </div> -->
     </div>
   </div>
 </template>
@@ -389,40 +390,6 @@ const closeModal = () => {
     }
   }
 
-  // &__modal {
-  //   position: fixed;
-  //   top: 0;
-  //   left: 0;
-  //   right: 0;
-  //   bottom: 0;
-  //   background: rgba(0, 0, 0, 0.5);
-  //   display: flex;
-  //   justify-content: center;
-  //   align-items: center;
-  //   z-index: 1000;
-  // }
-
-  // &__modal-content {
-  //   background: #fff;
-  //   padding: 20px;
-  //   border-radius: 8px;
-  //   width: 90%;
-  //   max-width: 400px;
-
-  //   .dark-mode & {
-  //     background: #2d2d2d;
-  //     color: #fff;
-  //   }
-
-  //   form {
-  //     width: 100%;
-  //   }
-
-  //   h3 {
-  //     margin: 0 0 16px 0;
-  //   }
-  // }
-
   &__form-group {
     width: 100%;
     margin-bottom: 12px;
@@ -565,37 +532,88 @@ const closeModal = () => {
 .voice-input__modal-body {
   padding: 20px;
   display: flex;
-  align-items: center;
   flex-direction: column;
   gap: 16px;
-
-  &--loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    font-size: 1rem;
-    color: #495057;
-
-    .dark-mode & {
-      color: #ccc;
-    }
-  }
 
   form {
     width: 100%;
   }
 }
 
-.voice-input__controls {
+// Estilos para a confirmação de exclusão
+.delete-confirmation {
+  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 
-  @media (min-width: 480px) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  &__icon {
+    display: flex;
+    justify-content: center;
+  }
+
+  &__message {
+    p {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      line-height: 1.5;
+
+      div{
+          h2{
+            font-size: 1rem !important;
+          }
+        }
+
+    }
+  }
+
+  &__warning {
+    color: #dc3545;
+    font-size: 0.9rem !important;
+    font-weight: 600;
+
+    .dark-mode & {
+      color: #ff6b6b;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  &__confirm,
+  &__cancel {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    min-width: 120px;
+  }
+
+  &__confirm {
+    background: #dc3545;
+    color: #fff;
+
+    &:hover {
+      background: #c82333;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__cancel {
+    background: #6c757d;
+    color: #fff;
+
+    &:hover {
+      background: #545b62;
+      transform: translateY(-1px);
+    }
   }
 }
 
@@ -606,11 +624,21 @@ const closeModal = () => {
     &__actions {
       opacity: 1;
     }
+  }
 
-    &__modal-content {
-      margin: 20px;
-      width: calc(100% - 40px);
+  .delete-confirmation__actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .voice-input__modal-content {
+    width: 95%;
+    margin: 20px;
   }
 }
 </style>

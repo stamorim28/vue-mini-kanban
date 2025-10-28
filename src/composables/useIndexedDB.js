@@ -86,14 +86,14 @@ export const indexedDB = {
     try {
       const db = await this.initDB()
       const data = await db.get(STORE_NAME, 'kanbanData')
-      toast.success('Tarefas carregadas com sucesso!', {
-        position: toast.POSITION.TOP_RIGHT,
-        theme: 'colored',
-        autoClose: 5000,
-        toastStyle: {
-          fontSize: '14px',
-        },
-      })
+      // toast.success('Tarefas carregadas com sucesso!', {
+      //   position: toast.POSITION.TOP_RIGHT,
+      //   theme: 'colored',
+      //   autoClose: 5000,
+      //   toastStyle: {
+      //     fontSize: '14px',
+      //   },
+      // })
       console.log('📥 Dados carregados do IndexedDB:', data)
       return data
     } catch (error) {

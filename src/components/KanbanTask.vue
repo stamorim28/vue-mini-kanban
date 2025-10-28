@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import {
   PencilSquareIcon,
   TrashIcon,
@@ -19,14 +19,12 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['task-updated', 'task-deleted', 'task-drag-start', 'task-drag-end'])
+const emit = defineEmits(['task-updated', 'task-deleted', 'task-move'])
 
 const isEditing = ref(false)
 const isDragging = ref(false)
 const showModal = ref(false)
-const modalType = ref('')
-const touchStartY = ref(0)
-const touchStartX = ref(0)
+const modalType = ref('') // 'edit', 'delete', 'move'
 
 const editForm = ref({
   title: '',
@@ -35,11 +33,17 @@ const editForm = ref({
   columnId: 'todo',
 })
 
-// ✅ Dados para drag mobile
-const dragData = computed(() => ({
-  taskId: props.task.id,
-  fromColumnId: props.columnId,
-}))
+const moveForm = ref({
+  targetColumnId: '',
+})
+
+// ✅ Obter a lista de colunas disponíveis
+const kanbanStore = inject('kanbanStore') // Ou importe diretamente se preferir
+const columns = [
+  { id: 'todo', title: 'A fazer' },
+  { id: 'in-progress', title: 'Em desenvolvimento' },
+  { id: 'done', title: 'Concluído' },
+]
 
 const priorityLabel = computed(() => {
   const labels = {
@@ -75,85 +79,17 @@ const isFormValid = computed(() => {
   return editForm.value.title.trim().length > 0
 })
 
-// ✅ Handlers melhorados para mobile
-const handleDragStart = (event) => {
-  isDragging.value = true
-  emit('task-drag-start', props.task.id)
+const isMoveFormValid = computed(() => {
+  return moveForm.value.targetColumnId && moveForm.value.targetColumnId !== props.columnId
+})
 
-  if (event.dataTransfer) {
-    const data = {
-      taskId: props.task.id,
-      fromColumnId: props.columnId,
-    }
-    event.dataTransfer.setData('application/json', JSON.stringify(data))
-    event.dataTransfer.effectAllowed = 'move'
-  }
-
-  setTimeout(() => {
-    if (event.target) event.target.style.opacity = '0.4'
-  }, 0)
+// ✅ Abrir modal de mover tarefa
+const openMoveModal = () => {
+  modalType.value = 'move'
+  moveForm.value.targetColumnId = '' // Resetar seleção
+  showModal.value = true
 }
 
-const handleDragEnd = (event) => {
-  isDragging.value = false
-  emit('task-drag-end')
-  if (event.target) event.target.style.opacity = '1'
-}
-
-// ✅ Sistema de drag para touch
-const handleTouchStart = (event) => {
-  const touch = event.touches[0]
-  touchStartY.value = touch.clientY
-  touchStartX.value = touch.clientX
-
-  // Adiciona dados para drag
-  event.currentTarget.dataset.dragPayload = JSON.stringify(dragData.value)
-
-  // Efeito visual
-  event.currentTarget.style.opacity = '0.7'
-  event.currentTarget.style.transform = 'scale(0.98)'
-
-  // Previne scroll acidental
-  event.preventDefault()
-}
-
-const handleTouchMove = (event) => {
-  if (!isDragging.value) {
-    const touch = event.touches[0]
-    const deltaY = Math.abs(touch.clientY - touchStartY.value)
-    const deltaX = Math.abs(touch.clientX - touchStartX.value)
-
-    // Inicia drag se o movimento for principalmente horizontal/vertical
-    if (deltaY > 10 || deltaX > 10) {
-      isDragging.value = true
-      event.currentTarget.style.opacity = '0.4'
-      event.currentTarget.style.transform = 'scale(0.95) rotate(3deg)'
-    }
-  }
-}
-
-const handleTouchEnd = (event) => {
-  const element = event.currentTarget
-  element.style.opacity = '1'
-  element.style.transform = 'scale(1) rotate(0deg)'
-
-  if (isDragging.value) {
-    isDragging.value = false
-    emit('task-drag-end')
-  }
-
-  delete element.dataset.dragPayload
-}
-
-const handleTouchCancel = (event) => {
-  const element = event.currentTarget
-  element.style.opacity = '1'
-  element.style.transform = 'scale(1) rotate(0deg)'
-  isDragging.value = false
-  delete element.dataset.dragPayload
-}
-
-// Resto do código permanece igual...
 const toggleEdit = () => {
   if (!isEditing.value) {
     editForm.value = {
@@ -188,6 +124,19 @@ const saveEdit = () => {
   closeModal()
 }
 
+// ✅ Mover tarefa para outra coluna
+const moveTask = () => {
+  if (!isMoveFormValid.value) return
+
+  emit('task-move', {
+    taskId: props.task.id,
+    fromColumnId: props.columnId,
+    toColumnId: moveForm.value.targetColumnId,
+  })
+
+  closeModal()
+}
+
 const cancelEdit = () => {
   isEditing.value = false
   closeModal()
@@ -196,6 +145,29 @@ const cancelEdit = () => {
 const confirmDelete = () => {
   emit('task-deleted', props.task.id)
   closeModal()
+}
+
+// Handlers de drag (mantidos para desktop)
+const handleDragStart = (event) => {
+  isDragging.value = true
+
+  if (event.dataTransfer) {
+    const data = {
+      taskId: props.task.id,
+      fromColumnId: props.columnId,
+    }
+    event.dataTransfer.setData('application/json', JSON.stringify(data))
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  setTimeout(() => {
+    event.target.style.opacity = '0.4'
+  }, 0)
+}
+
+const handleDragEnd = (event) => {
+  isDragging.value = false
+  event.target.style.opacity = '1'
 }
 
 const openModal = (type) => {
@@ -211,10 +183,21 @@ const closeModal = () => {
   showModal.value = false
   modalType.value = ''
   isEditing.value = false
+  moveForm.value.targetColumnId = ''
 }
 
 const modalTitle = computed(() => {
-  return modalType.value === 'edit' ? 'Editar Tarefa' : 'Confirmar Exclusão'
+  const titles = {
+    edit: 'Editar Tarefa',
+    delete: 'Confirmar Exclusão',
+    move: 'Mover Tarefa',
+  }
+  return titles[modalType.value] || ''
+})
+
+const currentColumnName = computed(() => {
+  const column = columns.find((col) => col.id === props.columnId)
+  return column ? column.title : 'Coluna Atual'
 })
 </script>
 
@@ -224,18 +207,13 @@ const modalTitle = computed(() => {
       class="kanban-task"
       :class="taskClasses"
       draggable="true"
-      :data-drag-payload="JSON.stringify(dragData)"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
-      @touchstart="handleTouchStart"
-      @touchmove="handleTouchMove"
-      @touchend="handleTouchEnd"
-      @touchcancel="handleTouchCancel"
     >
       <div class="kanban-task__header">
         <div class="kanban-task__title" v-html="task.title"></div>
         <div class="kanban-task__actions">
-          <button class="kanban-task__edit" @touchstart.prevent>
+          <button class="kanban-task__move" @click="openMoveModal" title="Mover Tarefa">
             <ArrowsUpDownIcon style="height: 20px" />
           </button>
           <button class="kanban-task__edit" @click="openModal('edit')" title="Editar">
@@ -273,6 +251,7 @@ const modalTitle = computed(() => {
       </div>
     </aside>
 
+    <!-- Modal -->
     <div v-if="showModal" class="voice-input__modal">
       <div class="voice-input__modal-content">
         <div class="voice-input__modal-header">
@@ -283,6 +262,7 @@ const modalTitle = computed(() => {
         </div>
 
         <div class="voice-input__modal-body">
+          <!-- Formulário de Edição -->
           <div v-if="modalType === 'edit'">
             <form @submit.prevent="saveEdit">
               <div class="kanban-task__form-group">
@@ -317,6 +297,7 @@ const modalTitle = computed(() => {
             </form>
           </div>
 
+          <!-- Confirmação de Exclusão -->
           <div v-if="modalType === 'delete'" class="delete-confirmation">
             <div class="delete-confirmation__icon">
               <TrashIcon style="height: 48px; color: #dc3545" />
@@ -330,6 +311,46 @@ const modalTitle = computed(() => {
                 Sim, Excluir
               </button>
               <button class="delete-confirmation__cancel" @click="closeModal">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Formulário de Movimentação -->
+          <div v-if="modalType === 'move'" class="move-confirmation">
+            <div class="move-confirmation__icon">
+              <ArrowsUpDownIcon style="height: 48px; color: #007bff" />
+            </div>
+            <div class="move-confirmation__message">
+              <p>Mover tarefa <strong v-html="task.title"></strong> para:</p>
+              <!-- <p class="move-confirmation__current">
+                Atualmente em: <strong>{{ currentColumnName }}</strong>
+              </p> -->
+            </div>
+
+            <div class="move-confirmation__form">
+              <div class="kanban-task__form-group">
+                <select v-model="moveForm.targetColumnId" class="kanban-task__select">
+                  <option value="" disabled>Selecione uma coluna</option>
+                  <option
+                    v-for="column in columns"
+                    :key="column.id"
+                    :value="column.id"
+                    :disabled="column.id === columnId"
+                  >
+                    {{ column.title }} {{ column.id === columnId ? '(Atual)' : '' }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="move-confirmation__actions">
+              <button
+                class="move-confirmation__confirm"
+                @click="moveTask"
+                :disabled="!isMoveFormValid"
+              >
+                Mover Tarefa
+              </button>
+              <button class="move-confirmation__cancel" @click="closeModal">Cancelar</button>
             </div>
           </div>
         </div>
@@ -408,6 +429,7 @@ const modalTitle = computed(() => {
     opacity: 1;
   }
 
+  &__move,
   &__edit,
   &__delete {
     background: none;
@@ -692,6 +714,85 @@ const modalTitle = computed(() => {
 
   form {
     width: 100%;
+  }
+}
+
+.move-confirmation {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &__icon {
+    display: flex;
+    justify-content: center;
+  }
+
+  &__message {
+    p {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+  }
+
+  &__current {
+    color: #6c757d;
+    font-size: 0.9rem !important;
+
+    .dark-mode & {
+      color: #ccc;
+    }
+  }
+
+  &__form {
+    text-align: left;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  &__confirm,
+  &__cancel {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    min-width: 140px;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+  }
+
+  &__confirm {
+    background: #007bff;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: #0056b3;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__cancel {
+    background: #6c757d;
+    color: #fff;
+
+    &:hover {
+      background: #545b62;
+      transform: translateY(-1px);
+    }
   }
 }
 

@@ -7,12 +7,6 @@ import DarkModeToggle from '@/components/DarkModeToggle.vue'
 
 const store = useKanbanStore()
 
-// ✅ Função para emitir eventos globais de drag
-const emitDragEvent = (eventName, detail = null) => {
-  const event = new CustomEvent(eventName, { detail })
-  document.dispatchEvent(event)
-}
-
 const handleTaskMove = ({ taskId, fromColumnId, toColumnId }) => {
   console.log('📦 Evento task-moved recebido:', { taskId, fromColumnId, toColumnId })
   store.moveTask(taskId, fromColumnId, toColumnId)
@@ -36,15 +30,6 @@ const handleTaskCreated = async (result) => {
     }
     store.addTask(taskData)
   }
-}
-
-// ✅ Handler para eventos de drag das tasks
-const handleTaskDragStart = (taskId) => {
-  emitDragEvent('task-drag-start', taskId)
-}
-
-const handleTaskDragEnd = () => {
-  emitDragEvent('task-drag-end')
 }
 
 onMounted(() => {
@@ -83,8 +68,6 @@ onMounted(() => {
         @task-moved="handleTaskMove"
         @task-updated="handleTaskUpdate"
         @task-deleted="handleTaskDelete"
-        @task-drag-start="handleTaskDragStart"
-        @task-drag-end="handleTaskDragEnd"
       />
     </div>
   </div>

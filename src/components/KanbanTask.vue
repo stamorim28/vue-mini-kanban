@@ -1,6 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { PencilSquareIcon, TrashIcon, XMarkIcon, MicrophoneIcon } from '@heroicons/vue/24/solid'
+import {
+  PencilSquareIcon,
+  TrashIcon,
+  XMarkIcon,
+  MicrophoneIcon,
+  ArrowsUpDownIcon,
+} from '@heroicons/vue/24/solid'
 
 const props = defineProps({
   task: {
@@ -26,6 +32,11 @@ const editForm = ref({
   priority: 'medium',
   columnId: 'todo',
 })
+
+const dragData = computed(() => ({
+  taskId: props.task.id,
+  fromColumnId: props.columnId,
+}))
 
 const priorityLabel = computed(() => {
   const labels = {
@@ -105,15 +116,24 @@ const confirmDelete = () => {
   closeModal()
 }
 
+// ✅ Handlers melhorados para mobile
 const handleDragStart = (event) => {
   isDragging.value = true
-  const data = {
-    taskId: props.task.id,
-    fromColumnId: props.columnId,
-  }
-  event.dataTransfer.setData('application/json', JSON.stringify(data))
-  event.dataTransfer.effectAllowed = 'move'
 
+  // ✅ Para desktop
+  if (event.dataTransfer) {
+    const data = {
+      taskId: props.task.id,
+      fromColumnId: props.columnId,
+    }
+    event.dataTransfer.setData('application/json', JSON.stringify(data))
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  // ✅ Para mobile - adiciona dados ao elemento
+  event.currentTarget.dataset.dragPayload = JSON.stringify(dragData.value)
+
+  // Efeito visual de drag
   setTimeout(() => {
     event.target.style.opacity = '0.4'
   }, 0)
@@ -122,6 +142,32 @@ const handleDragStart = (event) => {
 const handleDragEnd = (event) => {
   isDragging.value = false
   event.target.style.opacity = '1'
+  // ✅ Limpa dados do mobile
+  delete event.currentTarget.dataset.dragPayload
+}
+
+// ✅ Handler específico para touch
+const handleTouchStart = (event) => {
+  isDragging.value = true
+  const element = event.currentTarget
+  element.dataset.dragPayload = JSON.stringify(dragData.value)
+  element.style.opacity = '0.4'
+
+  // ✅ Feedback visual melhor para mobile
+  element.style.transform = 'scale(0.95)'
+}
+
+const handleTouchEnd = (event) => {
+  isDragging.value = false
+  const element = event.currentTarget
+  element.style.opacity = '1'
+  element.style.transform = 'scale(1)'
+  delete element.dataset.dragPayload
+}
+
+const handleTouchMove = (event) => {
+  // ✅ Permite o scroll natural
+  event.preventDefault()
 }
 
 const openModal = (type) => {
@@ -146,16 +192,24 @@ const modalTitle = computed(() => {
 
 <template>
   <div>
-    <div
+    <aside
       class="kanban-task"
       :class="taskClasses"
       draggable="true"
+      :data-drag-payload="JSON.stringify(dragData)"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
+      @touchstart="handleTouchStart"
+      @touchend="handleTouchEnd"
+      @touchmove="handleTouchMove"
+      @touchcancel="handleTouchEnd"
     >
       <div class="kanban-task__header">
         <div class="kanban-task__title" v-html="task.title"></div>
         <div class="kanban-task__actions">
+          <button class="kanban-task__edit" @touchstart="handleTouchStart">
+            <ArrowsUpDownIcon style="height: 20px" />
+          </button>
           <button class="kanban-task__edit" @click="openModal('edit')" title="Editar">
             <PencilSquareIcon style="height: 20px" />
           </button>
@@ -190,7 +244,7 @@ const modalTitle = computed(() => {
           </details>
         </div>
       </div>
-    </div>
+    </aside>
 
     <div v-if="showModal" class="voice-input__modal">
       <div class="voice-input__modal-content">
@@ -267,6 +321,9 @@ const modalTitle = computed(() => {
   cursor: grab;
   transition: all 0.2s ease;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+  user-select: none;
 
   .dark-mode & {
     background: #3d3d3d;
@@ -609,7 +666,6 @@ const modalTitle = computed(() => {
   }
 }
 
-// Estilos para a confirmação de exclusão
 .delete-confirmation {
   text-align: center;
   display: flex;

@@ -15,6 +15,7 @@ const emit = defineEmits(['task-moved', 'task-updated', 'task-deleted'])
 
 const isDragOver = ref(false)
 
+// ✅ Suporte melhorado para eventos de touch
 const handleDragOver = (event) => {
   event.preventDefault()
   isDragOver.value = true
@@ -36,7 +37,17 @@ const handleDrop = (event) => {
   isDragOver.value = false
 
   try {
-    const data = JSON.parse(event.dataTransfer.getData('application/json'))
+    // ✅ Suporte tanto para mouse quanto touch
+    let data
+    if (event.dataTransfer) {
+      data = JSON.parse(event.dataTransfer.getData('application/json'))
+    } else if (event.target.dataset.dragPayload) {
+      // ✅ Fallback para touch events
+      data = JSON.parse(event.target.dataset.dragPayload)
+    } else {
+      console.warn('❌ Nenhum dado de drag encontrado')
+      return
+    }
 
     if (data.fromColumnId !== props.column.id) {
       emit('task-moved', {
@@ -46,7 +57,8 @@ const handleDrop = (event) => {
       })
     }
   } catch (error) {
-    toast.error('Não foi possível mover sua tarefa.', {
+    console.error('❌ Error processing drop:', error)
+    toast.error('Não foi possível mover a tarefa (processing drop)', {
       position: toast.POSITION.TOP_RIGHT,
       theme: 'colored',
       autoClose: 5000,
@@ -54,6 +66,33 @@ const handleDrop = (event) => {
         fontSize: '14px',
       },
     })
+  }
+}
+
+// ✅ Handler específico para touch
+const handleTouchEnd = (event) => {
+  const dragPayload = event.target.closest('[data-drag-payload]')?.dataset.dragPayload
+  if (dragPayload) {
+    try {
+      const data = JSON.parse(dragPayload)
+      if (data.fromColumnId !== props.column.id) {
+        emit('task-moved', {
+          taskId: data.taskId,
+          fromColumnId: data.fromColumnId,
+          toColumnId: props.column.id,
+        })
+      }
+    } catch (error) {
+      console.error('❌ Error processing touch drop:', error)
+      toast.error('Não foi possível mover a tarefa (touch drop)', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
+    }
   }
 }
 
@@ -73,12 +112,15 @@ const handleTaskDelete = (taskId) => {
       <span class="kanban-column__count">{{ column.tasks.length }}</span>
     </div>
 
-    <div
+    <aside
       class="kanban-column__tasks"
       @drop="handleDrop"
       @dragover="handleDragOver"
       @dragenter="handleDragEnter"
       @dragleave="handleDragLeave"
+      @touchend="handleTouchEnd"
+      @touchmove.prevent
+      @touchstart.prevent
     >
       <KanbanTask
         v-for="task in column.tasks"
@@ -92,7 +134,7 @@ const handleTaskDelete = (taskId) => {
       <div v-if="column.tasks.length === 0 && !isDragOver" class="kanban-column__empty">
         Nenhuma tarefa nesta coluna.
       </div>
-    </div>
+    </aside>
   </div>
 </template>
 
@@ -103,6 +145,8 @@ const handleTaskDelete = (taskId) => {
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   min-height: 400px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 
   .dark-mode & {
     background: #2d2d2d;
@@ -147,6 +191,9 @@ const handleTaskDelete = (taskId) => {
     gap: 12px;
     min-height: 200px;
     position: relative;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    max-height: 60dvh;
   }
 
   &__drop-zone {

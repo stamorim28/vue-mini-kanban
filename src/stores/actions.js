@@ -168,6 +168,15 @@ export default {
       console.log('🔄 Movendo task:', { taskId, fromColumnId, toColumnId })
       console.log('📋 Todas as tasks:', this.tasks)
       console.log('📁 Todas as colunas:', this.columns)
+      console.log('🔄 Movendo task MOBILE:', { taskId, fromColumnId, toColumnId })
+      console.log(
+        '📋 Tasks antes:',
+        this.tasks.map((t) => ({ id: t.id, column: t.columnId })),
+      )
+      console.log(
+        '📁 Colunas antes:',
+        this.columns.map((c) => ({ id: c.id, tasks: c.tasks.length })),
+      )
 
       let task = this.tasks.find((t) => t.id === taskId)
 
@@ -215,6 +224,7 @@ export default {
       })
 
       console.log('✅ Task movida e salva com sucesso!')
+      console.log('✅ Task movida com SUCESSO no mobile!')
       toast.success('Tarefa movida com sucesso!', {
         position: toast.POSITION.TOP_RIGHT,
         theme: 'colored',
@@ -225,6 +235,8 @@ export default {
       })
     } catch (error) {
       console.error('❌ Erro ao mover task:', error)
+      console.error('❌ Erro DETALHADO ao mover task no mobile:', error)
+      console.error('Stack:', error.stack)
       toast.error('Não foi possível mover sua tarefa.', {
         position: toast.POSITION.TOP_RIGHT,
         theme: 'colored',

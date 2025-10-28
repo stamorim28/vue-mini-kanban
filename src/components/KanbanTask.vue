@@ -181,12 +181,11 @@ const modalTitle = computed(() => {
           <details class="kanban-task__transcript-details">
             <summary class="kanban-task__transcript-summary">
               <!-- <span class="kanban-task__transcript-icon">🎤</span> -->
-               <MicrophoneIcon style="height: 16px" />
+              <MicrophoneIcon style="height: 16px" />
               Transcrição de voz
             </summary>
             <div class="kanban-task__transcript-content">
               <i>{{ task.voiceTranscript }}</i>
-
             </div>
           </details>
         </div>
@@ -242,7 +241,7 @@ const modalTitle = computed(() => {
               <TrashIcon style="height: 48px; color: #dc3545" />
             </div>
             <div class="delete-confirmation__message">
-              <p>Tem certeza que deseja excluir a tarefa <div v-html="task.title"></div>?</p>
+              <p>Tem certeza que deseja excluir a tarefa <strong v-html="task.title"></strong>?</p>
               <p class="delete-confirmation__warning">Esta ação não pode ser desfeita.</p>
             </div>
             <div class="delete-confirmation__actions">
@@ -414,8 +413,6 @@ const modalTitle = computed(() => {
     font-size: 0.8rem;
     line-height: 1.4;
     color: #495057;
-
-
 
     .dark-mode & {
       background: #2d2d2d;
@@ -630,12 +627,11 @@ const modalTitle = computed(() => {
       font-size: 1rem;
       line-height: 1.5;
 
-      div{
-          h2{
-            font-size: 1rem !important;
-          }
+      div {
+        h2 {
+          font-size: 1rem !important;
         }
-
+      }
     }
   }
 

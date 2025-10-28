@@ -372,10 +372,6 @@ watch(showModal, (newValue) => {
   }
 }
 
-.voice-input__record-icon {
-  font-size: 1.1rem;
-}
-
 .voice-input__record-text {
   font-size: 2.5rem;
   font-weight: bold;
@@ -391,7 +387,6 @@ watch(showModal, (newValue) => {
   border-radius: 6px;
   background: #28a745;
   color: #fff;
-
   cursor: pointer;
   transition: all 0.3s ease;
   min-width: 140px;
@@ -553,27 +548,15 @@ watch(showModal, (newValue) => {
 }
 
 // Responsividade
-@media (max-width: 479px) {
+@media (max-width: 768px) {
+  .voice-input__audio-info {
+    display: flex;
+    justify-content: center;
+  }
+
   .voice-input__modal-content {
     width: 95%;
     margin: 20px;
-  }
-
-  .voice-input__record-btn,
-  .voice-input__process-btn {
-    width: 100%;
-    min-width: auto;
-  }
-
-  .voice-input__record-text,
-  .voice-input__process-text {
-    font-size: 0.85rem;
-  }
-
-  .voice-input__audio-info {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
   }
 }
 

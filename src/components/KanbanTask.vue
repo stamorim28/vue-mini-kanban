@@ -24,7 +24,7 @@ const emit = defineEmits(['task-updated', 'task-deleted', 'task-move'])
 const isEditing = ref(false)
 const isDragging = ref(false)
 const showModal = ref(false)
-const modalType = ref('') // 'edit', 'delete', 'move'
+const modalType = ref('')
 
 const editForm = ref({
   title: '',
@@ -37,7 +37,6 @@ const moveForm = ref({
   targetColumnId: '',
 })
 
-// ✅ Lista de colunas disponíveis
 const columns = [
   { id: 'todo', title: 'A fazer' },
   { id: 'in-progress', title: 'Em desenvolvimento' },
@@ -82,27 +81,21 @@ const isMoveFormValid = computed(() => {
   return moveForm.value.targetColumnId && moveForm.value.targetColumnId !== props.columnId
 })
 
-// ✅ Prevenir eventos de touch no container principal
 const handleTouchStart = (event) => {
-  // Se o toque foi em um botão, não faz nada (deixa o clique funcionar)
   if (event.target.closest('.kanban-task__actions') || event.target.closest('button')) {
     return
   }
 
-  // Se foi em outra parte do card, previne o comportamento padrão
-  // mas permite que os botões ainda funcionem
   event.stopPropagation()
 }
 
 const handleTouchMove = (event) => {
-  // Permite scroll natural se não estiver em um botão
   if (!event.target.closest('.kanban-task__actions') && !event.target.closest('button')) {
     return
   }
   event.preventDefault()
 }
 
-// ✅ Abrir modal de mover tarefa
 const openMoveModal = (event) => {
   event.stopPropagation()
   modalType.value = 'move'
@@ -145,7 +138,6 @@ const saveEdit = () => {
   closeModal()
 }
 
-// ✅ Mover tarefa para outra coluna
 const moveTask = () => {
   if (!isMoveFormValid.value) return
 
@@ -168,9 +160,7 @@ const confirmDelete = () => {
   closeModal()
 }
 
-// Handlers de drag para desktop
 const handleDragStart = (event) => {
-  // ✅ Não inicia drag se foi clicado em um botão
   if (event.target.closest('.kanban-task__actions') || event.target.closest('button')) {
     event.preventDefault()
     return

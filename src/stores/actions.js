@@ -40,7 +40,7 @@ export default {
         priority: taskData.priority || 'medium',
         columnId: taskData.columnId || 'todo',
         createdAt: new Date().toISOString(),
-        voiceTranscript: taskData.voiceTranscript || '', // Nova propriedade
+        voiceTranscript: taskData.voiceTranscript || '',
       }
 
       console.log('➕ Nova task:', newTask)

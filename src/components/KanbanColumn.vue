@@ -15,7 +15,6 @@ const emit = defineEmits(['task-moved', 'task-updated', 'task-deleted'])
 
 const isDragOver = ref(false)
 
-// Handlers de drag para desktop (mantidos)
 const handleDragOver = (event) => {
   event.preventDefault()
   isDragOver.value = true
@@ -58,7 +57,6 @@ const handleDrop = (event) => {
   }
 }
 
-// ✅ Novo handler para movimento via modal
 const handleTaskMove = ({ taskId, fromColumnId, toColumnId }) => {
   emit('task-moved', {
     taskId,

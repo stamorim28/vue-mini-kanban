@@ -534,7 +534,6 @@ watch(showModal, (newValue) => {
   }
 }
 
-// Animação para o botão de gravação
 @keyframes voice-input__pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
@@ -547,7 +546,6 @@ watch(showModal, (newValue) => {
   }
 }
 
-// Responsividade
 @media (max-width: 768px) {
   .voice-input__audio-info {
     display: flex;

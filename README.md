@@ -1,4 +1,4 @@
-# Vue Mini Kanban ([com GPT-5-Nano do node-my-ai-api](https://github.com/stamorim28/node-my-ai-api))
+# Vue Mini Kanban ([com GPT-5-Nano do node-voice-task-api](https://github.com/stamorim28/node-voice-task-api))
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5.22-brightgreen.svg)](https://vuejs.org/)
 [![Vitest](https://img.shields.io/badge/Testing-Vitest-blue.svg)](https://vitest.dev/)
@@ -7,7 +7,7 @@
 
 Um aplicativo Kanban em que o usuário pode criar tasks com auxílio gpt-5-nano por comando de voz.
 
-Confira também o [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api), o repositório da API usada no projeto.
+Confira também o [node-voice-task-api](https://github.com/stamorim28/node-voice-task-api), o repositório da API usada no projeto.
 
 ## 🚀 Funcionalidades
 

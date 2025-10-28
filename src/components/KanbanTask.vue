@@ -366,14 +366,14 @@ const currentColumnName = computed(() => {
             </div>
             <div class="move-confirmation__message">
               <p>Mover tarefa <strong v-html="task.title"></strong> para:</p>
-              <p class="move-confirmation__current">
+              <!-- <p class="move-confirmation__current">
                 Atualmente em: <strong>{{ currentColumnName }}</strong>
-              </p>
+              </p> -->
             </div>
 
             <div class="move-confirmation__form">
               <div class="kanban-task__form-group">
-                <label>Selecionar Coluna:</label>
+                <!-- <label>Selecionar Coluna:</label> -->
                 <select v-model="moveForm.targetColumnId" class="kanban-task__select">
                   <option value="" disabled>Selecione uma coluna</option>
                   <option
@@ -824,7 +824,6 @@ const currentColumnName = computed(() => {
     gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
-    margin-top: 1rem;
   }
 
   &__confirm,

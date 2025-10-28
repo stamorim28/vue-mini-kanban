@@ -59,14 +59,14 @@ export const indexedDB = {
       const cleanData = prepareDataForStorage(data)
       await db.put(STORE_NAME, cleanData, 'kanbanData')
       console.log('✅ Dados salvos no IndexedDB:', cleanData)
-      toast.success('Sua tarefa foi salva com sucesso!', {
-        position: toast.POSITION.TOP_RIGHT,
-        theme: 'colored',
-        autoClose: 5000,
-        toastStyle: {
-          fontSize: '14px',
-        },
-      })
+      // toast.success('Sua tarefa foi salva com sucesso!', {
+      //   position: toast.POSITION.TOP_RIGHT,
+      //   theme: 'colored',
+      //   autoClose: 5000,
+      //   toastStyle: {
+      //     fontSize: '14px',
+      //   },
+      // })
     } catch (error) {
       console.error('❌ Error saving to IndexedDB:', error)
       toast.error('Não foi possível salvar sua tarefa.', {

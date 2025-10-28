@@ -7,12 +7,12 @@
 
 Um aplicativo Kanban em que o usuário pode criar tasks com auxílio gpt-5-nano por comando de voz.
 
-Não esqueça de conferir a [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api), o repositório da API usada no projeto.
+Confira também o [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api), o repositório da API usada no projeto.
 
 ## 🚀 Funcionalidades
 
 - **🎯 Interface Kanban Completa** - Três colunas (A fazer, Em desenvolvimento, Concluído)
-- **🎤 Criação de Tarefas por Voz** - Integração com APIs de transcrição de voz
+- **🎤 Criação de Tarefas por Voz** - Integração com APIs de transcrição de voz (Whisper)
 - **💾 Persistência Local** - Armazenamento com IndexedDB
 - **📱 Design Responsivo** - Interface adaptável para todos os dispositivos
 - **🧪 Testes Abrangentes** - Unitários (Vitest) e E2E (Cypress)
@@ -20,7 +20,7 @@ Não esqueça de conferir a [node-my-ai-api](https://github.com/stamorim28/node-
 ## 🛠 Tecnologias
 
 ### Core
-- **Vue.js 3.5.22** - Framework principal
+- **Vue.js 3.5** - Framework principal
 - **Pinia** - Gerenciamento de estado
 - **Vite** - Build tool e dev server
 
@@ -28,6 +28,7 @@ Não esqueça de conferir a [node-my-ai-api](https://github.com/stamorim28/node-
 - **SASS/SCSS** - Pré-processador CSS
 - **Metodologia BEM** - Organização de classes CSS
 - **Design Responsivo** - Mobile-first approach
+- **Heroicons** - Biblioteca de ícones
 
 ### Testes
 - **Vitest** - Testes unitários e de integração
@@ -36,8 +37,6 @@ Não esqueça de conferir a [node-my-ai-api](https://github.com/stamorim28/node-
 ### Funcionalidades Avançadas
 - **Web Audio API** - Captura e processamento de áudio
 - **IndexedDB** - Persistência de dados local
-- **Heroicons** - Biblioteca de ícones
-
 
 ## ⚙️ Como Executar
 

@@ -959,7 +959,9 @@ const currentColumnName = computed(() => {
     }
   }
 
-  .delete-confirmation__actions {
+  .delete-confirmation__actions,
+  .move-confirmation__actions,
+  .kanban-task__modal-actions {
     flex-direction: column;
 
     button {

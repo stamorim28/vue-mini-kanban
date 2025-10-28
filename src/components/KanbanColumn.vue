@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 import KanbanTask from '@/components/KanbanTask.vue'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
 const props = defineProps({
   column: {
@@ -44,7 +46,14 @@ const handleDrop = (event) => {
       })
     }
   } catch (error) {
-    console.error('Error processing drop:', error)
+    toast.error('Não foi possível mover sua tarefa.', {
+      position: toast.POSITION.TOP_RIGHT,
+      theme: 'colored',
+      autoClose: 5000,
+      toastStyle: {
+        fontSize: '14px',
+      },
+    })
   }
 }
 

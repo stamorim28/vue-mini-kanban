@@ -1,4 +1,6 @@
 import { ref, onUnmounted } from 'vue'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
 export function useVoiceRecognition() {
   const isRecording = ref(false)
@@ -38,7 +40,14 @@ export function useVoiceRecognition() {
       }, 1000)
     } catch (err) {
       console.error('Erro ao acessar o microfone:', err)
-      alert('Não foi possível acessar o microfone.')
+      toast.error('Não foi possível acessar o microfone.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
     }
   }
 
@@ -51,6 +60,14 @@ export function useVoiceRecognition() {
         tracks.forEach((t) => t.stop())
       } catch (e) {
         console.warn('Erro ao parar MediaRecorder:', e)
+        toast.error('Não foi possível parar a gravação.', {
+          position: toast.POSITION.TOP_RIGHT,
+          theme: 'colored',
+          autoClose: 5000,
+          toastStyle: {
+            fontSize: '14px',
+          },
+        })
       }
       isRecording.value = false
       console.log('%c🟢 Gravação encerrada', 'color: green; font-weight: bold;')
@@ -66,7 +83,14 @@ export function useVoiceRecognition() {
 
   const transcribeAndGenerateTask = async () => {
     if (!audioBlob.value) {
-      alert('Nenhum áudio gravado para enviar.')
+      toast.error('Nenhum áudio foi gravado para ser enviado.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
       return null
     }
 
@@ -84,6 +108,14 @@ export function useVoiceRecognition() {
 
       if (!response.ok) {
         const text = await response.text().catch(() => null)
+        toast.error('Falha na comunicação com o servidor.', {
+          position: toast.POSITION.TOP_RIGHT,
+          theme: 'colored',
+          autoClose: 5000,
+          toastStyle: {
+            fontSize: '14px',
+          },
+        })
         throw new Error(
           `Falha na comunicação com o servidor. Status ${response.status} - ${text || ''}`,
         )
@@ -94,14 +126,20 @@ export function useVoiceRecognition() {
       console.log('🧠 Transcrição:', transcript.value)
       console.log('📦 Tarefa gerada:', data.task)
 
-      // Retorna tanto a tarefa quanto a transcrição
       return {
         task: data.task,
         transcript: transcript.value,
       }
     } catch (err) {
       console.error('Erro ao gerar tarefa via backend:', err)
-      alert('Erro ao gerar a tarefa via backend.')
+      toast.error('Não foi possível criar a tarefa.', {
+        position: toast.POSITION.TOP_RIGHT,
+        theme: 'colored',
+        autoClose: 5000,
+        toastStyle: {
+          fontSize: '14px',
+        },
+      })
       return null
     } finally {
       isProcessing.value = false

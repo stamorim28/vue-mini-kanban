@@ -7,7 +7,7 @@
 
 Um aplicativo Kanban em que o usuário pode criar tasks com auxílio gpt-5-nano por comando de voz.
 
-Não esqueça de conferir a [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api), o repositório da API usada no projeto.
+Confira também o [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api), o repositório da API usada no projeto.
 
 ## 🚀 Funcionalidades
 

@@ -19,12 +19,14 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['task-updated', 'task-deleted'])
+const emit = defineEmits(['task-updated', 'task-deleted', 'task-drag-start', 'task-drag-end'])
 
 const isEditing = ref(false)
 const isDragging = ref(false)
 const showModal = ref(false)
 const modalType = ref('')
+const touchStartY = ref(0)
+const touchStartX = ref(0)
 
 const editForm = ref({
   title: '',
@@ -33,6 +35,7 @@ const editForm = ref({
   columnId: 'todo',
 })
 
+// ✅ Dados para drag mobile
 const dragData = computed(() => ({
   taskId: props.task.id,
   fromColumnId: props.columnId,
@@ -72,6 +75,85 @@ const isFormValid = computed(() => {
   return editForm.value.title.trim().length > 0
 })
 
+// ✅ Handlers melhorados para mobile
+const handleDragStart = (event) => {
+  isDragging.value = true
+  emit('task-drag-start', props.task.id)
+
+  if (event.dataTransfer) {
+    const data = {
+      taskId: props.task.id,
+      fromColumnId: props.columnId,
+    }
+    event.dataTransfer.setData('application/json', JSON.stringify(data))
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  setTimeout(() => {
+    if (event.target) event.target.style.opacity = '0.4'
+  }, 0)
+}
+
+const handleDragEnd = (event) => {
+  isDragging.value = false
+  emit('task-drag-end')
+  if (event.target) event.target.style.opacity = '1'
+}
+
+// ✅ Sistema de drag para touch
+const handleTouchStart = (event) => {
+  const touch = event.touches[0]
+  touchStartY.value = touch.clientY
+  touchStartX.value = touch.clientX
+
+  // Adiciona dados para drag
+  event.currentTarget.dataset.dragPayload = JSON.stringify(dragData.value)
+
+  // Efeito visual
+  event.currentTarget.style.opacity = '0.7'
+  event.currentTarget.style.transform = 'scale(0.98)'
+
+  // Previne scroll acidental
+  event.preventDefault()
+}
+
+const handleTouchMove = (event) => {
+  if (!isDragging.value) {
+    const touch = event.touches[0]
+    const deltaY = Math.abs(touch.clientY - touchStartY.value)
+    const deltaX = Math.abs(touch.clientX - touchStartX.value)
+
+    // Inicia drag se o movimento for principalmente horizontal/vertical
+    if (deltaY > 10 || deltaX > 10) {
+      isDragging.value = true
+      event.currentTarget.style.opacity = '0.4'
+      event.currentTarget.style.transform = 'scale(0.95) rotate(3deg)'
+    }
+  }
+}
+
+const handleTouchEnd = (event) => {
+  const element = event.currentTarget
+  element.style.opacity = '1'
+  element.style.transform = 'scale(1) rotate(0deg)'
+
+  if (isDragging.value) {
+    isDragging.value = false
+    emit('task-drag-end')
+  }
+
+  delete element.dataset.dragPayload
+}
+
+const handleTouchCancel = (event) => {
+  const element = event.currentTarget
+  element.style.opacity = '1'
+  element.style.transform = 'scale(1) rotate(0deg)'
+  isDragging.value = false
+  delete element.dataset.dragPayload
+}
+
+// Resto do código permanece igual...
 const toggleEdit = () => {
   if (!isEditing.value) {
     editForm.value = {
@@ -116,60 +198,6 @@ const confirmDelete = () => {
   closeModal()
 }
 
-// ✅ Handlers melhorados para mobile
-const handleDragStart = (event) => {
-  isDragging.value = true
-
-  // ✅ Para desktop
-  if (event.dataTransfer) {
-    const data = {
-      taskId: props.task.id,
-      fromColumnId: props.columnId,
-    }
-    event.dataTransfer.setData('application/json', JSON.stringify(data))
-    event.dataTransfer.effectAllowed = 'move'
-  }
-
-  // ✅ Para mobile - adiciona dados ao elemento
-  event.currentTarget.dataset.dragPayload = JSON.stringify(dragData.value)
-
-  // Efeito visual de drag
-  setTimeout(() => {
-    event.target.style.opacity = '0.4'
-  }, 0)
-}
-
-const handleDragEnd = (event) => {
-  isDragging.value = false
-  event.target.style.opacity = '1'
-  // ✅ Limpa dados do mobile
-  delete event.currentTarget.dataset.dragPayload
-}
-
-// ✅ Handler específico para touch
-const handleTouchStart = (event) => {
-  isDragging.value = true
-  const element = event.currentTarget
-  element.dataset.dragPayload = JSON.stringify(dragData.value)
-  element.style.opacity = '0.4'
-
-  // ✅ Feedback visual melhor para mobile
-  element.style.transform = 'scale(0.95)'
-}
-
-const handleTouchEnd = (event) => {
-  isDragging.value = false
-  const element = event.currentTarget
-  element.style.opacity = '1'
-  element.style.transform = 'scale(1)'
-  delete element.dataset.dragPayload
-}
-
-const handleTouchMove = (event) => {
-  // ✅ Permite o scroll natural
-  event.preventDefault()
-}
-
 const openModal = (type) => {
   modalType.value = type
   showModal.value = true
@@ -200,14 +228,14 @@ const modalTitle = computed(() => {
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
       @touchstart="handleTouchStart"
-      @touchend="handleTouchEnd"
       @touchmove="handleTouchMove"
-      @touchcancel="handleTouchEnd"
+      @touchend="handleTouchEnd"
+      @touchcancel="handleTouchCancel"
     >
       <div class="kanban-task__header">
         <div class="kanban-task__title" v-html="task.title"></div>
         <div class="kanban-task__actions">
-          <button class="kanban-task__edit" @touchstart="handleTouchStart">
+          <button class="kanban-task__edit" @touchstart.prevent>
             <ArrowsUpDownIcon style="height: 20px" />
           </button>
           <button class="kanban-task__edit" @click="openModal('edit')" title="Editar">
@@ -234,7 +262,6 @@ const modalTitle = computed(() => {
         <div v-if="hasVoiceTranscript" class="kanban-task__transcript">
           <details class="kanban-task__transcript-details">
             <summary class="kanban-task__transcript-summary">
-              <!-- <span class="kanban-task__transcript-icon">🎤</span> -->
               <MicrophoneIcon style="height: 16px" />
               Transcrição de voz
             </summary>
@@ -336,8 +363,10 @@ const modalTitle = computed(() => {
   }
 
   &--dragging {
-    opacity: 0.5;
-    transform: rotate(5deg);
+    opacity: 0.4;
+    transform: scale(0.95) rotate(3deg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
   }
 
   &--high {

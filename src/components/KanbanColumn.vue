@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import KanbanTask from '@/components/KanbanTask.vue'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
@@ -14,16 +14,21 @@ const props = defineProps({
 const emit = defineEmits(['task-moved', 'task-updated', 'task-deleted'])
 
 const isDragOver = ref(false)
+const activeDragTask = ref(null)
 
-// ✅ Suporte melhorado para eventos de touch
+// ✅ Sistema melhorado para detectar drop
 const handleDragOver = (event) => {
   event.preventDefault()
-  isDragOver.value = true
+  if (activeDragTask.value) {
+    isDragOver.value = true
+  }
 }
 
 const handleDragEnter = (event) => {
   event.preventDefault()
-  isDragOver.value = true
+  if (activeDragTask.value) {
+    isDragOver.value = true
+  }
 }
 
 const handleDragLeave = (event) => {
@@ -37,19 +42,19 @@ const handleDrop = (event) => {
   isDragOver.value = false
 
   try {
-    // ✅ Suporte tanto para mouse quanto touch
     let data
     if (event.dataTransfer) {
+      // Desktop
       data = JSON.parse(event.dataTransfer.getData('application/json'))
-    } else if (event.target.dataset.dragPayload) {
-      // ✅ Fallback para touch events
-      data = JSON.parse(event.target.dataset.dragPayload)
     } else {
-      console.warn('❌ Nenhum dado de drag encontrado')
-      return
+      // Mobile - procura por elementos com dados de drag
+      const dragElement = document.querySelector('[data-drag-payload]')
+      if (dragElement && dragElement.dataset.dragPayload) {
+        data = JSON.parse(dragElement.dataset.dragPayload)
+      }
     }
 
-    if (data.fromColumnId !== props.column.id) {
+    if (data && data.fromColumnId !== props.column.id) {
       emit('task-moved', {
         taskId: data.taskId,
         fromColumnId: data.fromColumnId,
@@ -58,7 +63,7 @@ const handleDrop = (event) => {
     }
   } catch (error) {
     console.error('❌ Error processing drop:', error)
-    toast.error('Não foi possível mover a tarefa (processing drop)', {
+    toast.error('Não foi possível mover a tarefa', {
       position: toast.POSITION.TOP_RIGHT,
       theme: 'colored',
       autoClose: 5000,
@@ -67,34 +72,72 @@ const handleDrop = (event) => {
       },
     })
   }
+  activeDragTask.value = null
 }
 
-// ✅ Handler específico para touch
+// ✅ Handlers para eventos de drag globais
+const handleTaskDragStart = (taskId) => {
+  activeDragTask.value = taskId
+  isDragOver.value = false
+}
+
+const handleTaskDragEnd = () => {
+  activeDragTask.value = null
+  isDragOver.value = false
+}
+
+// ✅ Handler para touch drop
 const handleTouchEnd = (event) => {
-  const dragPayload = event.target.closest('[data-drag-payload]')?.dataset.dragPayload
-  if (dragPayload) {
-    try {
-      const data = JSON.parse(dragPayload)
-      if (data.fromColumnId !== props.column.id) {
-        emit('task-moved', {
-          taskId: data.taskId,
-          fromColumnId: data.fromColumnId,
-          toColumnId: props.column.id,
+  if (!activeDragTask.value) return
+
+  const touch = event.changedTouches[0]
+  const elements = document.elementsFromPoint(touch.clientX, touch.clientY)
+
+  // Verifica se o touch terminou nesta coluna
+  const isInThisColumn = elements.some((el) => el.closest('.kanban-column') === event.currentTarget)
+
+  if (isInThisColumn) {
+    const dragElement = document.querySelector('[data-drag-payload]')
+    if (dragElement && dragElement.dataset.dragPayload) {
+      try {
+        const data = JSON.parse(dragElement.dataset.dragPayload)
+        if (data.fromColumnId !== props.column.id) {
+          emit('task-moved', {
+            taskId: data.taskId,
+            fromColumnId: data.fromColumnId,
+            toColumnId: props.column.id,
+          })
+        }
+      } catch (error) {
+        console.error('❌ Error processing touch drop:', error)
+        toast.error('Não foi possível mover a tarefa', {
+          position: toast.POSITION.TOP_RIGHT,
+          theme: 'colored',
+          autoClose: 5000,
+          toastStyle: {
+            fontSize: '14px',
+          },
         })
       }
-    } catch (error) {
-      console.error('❌ Error processing touch drop:', error)
-      toast.error('Não foi possível mover a tarefa (touch drop)', {
-        position: toast.POSITION.TOP_RIGHT,
-        theme: 'colored',
-        autoClose: 5000,
-        toastStyle: {
-          fontSize: '14px',
-        },
-      })
     }
   }
+
+  activeDragTask.value = null
+  isDragOver.value = false
 }
+
+// ✅ Adiciona/remove event listeners globais
+onMounted(() => {
+  document.addEventListener('task-drag-start', (e) => {
+    handleTaskDragStart(e.detail)
+  })
+  document.addEventListener('task-drag-end', handleTaskDragEnd)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('task-drag-start', handleTaskDragStart)
+  document.removeEventListener('task-drag-end', handleTaskDragEnd)
+})
 
 const handleTaskUpdate = ({ taskId, updates }) => {
   emit('task-updated', { taskId, updates })
@@ -112,8 +155,9 @@ const handleTaskDelete = (taskId) => {
       <span class="kanban-column__count">{{ column.tasks.length }}</span>
     </div>
 
-    <aside
+    <div
       class="kanban-column__tasks"
+      :class="{ 'kanban-column__tasks--drag-over': isDragOver }"
       @drop="handleDrop"
       @dragover="handleDragOver"
       @dragenter="handleDragEnter"
@@ -129,15 +173,22 @@ const handleTaskDelete = (taskId) => {
         :column-id="column.id"
         @task-updated="handleTaskUpdate"
         @task-deleted="handleTaskDelete"
+        @task-drag-start="(taskId) => handleTaskDragStart(taskId)"
+        @task-drag-end="handleTaskDragEnd"
       />
-      <div v-if="isDragOver" class="kanban-column__drop-zone">Solte aqui</div>
+
+      <div v-if="isDragOver" class="kanban-column__drop-zone">
+        <div class="kanban-column__drop-indicator">
+          <span>Solte aqui para mover</span>
+        </div>
+      </div>
+
       <div v-if="column.tasks.length === 0 && !isDragOver" class="kanban-column__empty">
         Nenhuma tarefa nesta coluna.
       </div>
-    </aside>
+    </div>
   </div>
 </template>
-
 <style lang="scss" scoped>
 .kanban-column {
   background: #fff;
@@ -194,16 +245,35 @@ const handleTaskDelete = (taskId) => {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
     max-height: 60dvh;
+
+    &--drag-over {
+      background: rgba(0, 123, 255, 0.05);
+      border: 2px dashed #007bff;
+    }
   }
 
   &__drop-zone {
-    border: 2px dashed #007bff;
-    border-radius: 6px;
-    padding: 20px;
-    text-align: center;
-    color: #007bff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(0, 123, 255, 0.1);
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    z-index: 10;
+  }
+
+  &__drop-indicator {
+    padding: 20px;
+    background: #007bff;
+    color: white;
+    border-radius: 6px;
     font-weight: 600;
+    text-align: center;
   }
 
   &__empty {

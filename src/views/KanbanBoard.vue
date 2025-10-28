@@ -22,8 +22,14 @@ const handleTaskDelete = (taskId) => {
   store.deleteTask(taskId)
 }
 
-const handleTaskCreated = (taskData) => {
-  store.addTask(taskData)
+const handleTaskCreated = async (result) => {
+  if (result && result.task) {
+    const taskData = {
+      ...result.task,
+      voiceTranscript: result.transcript || '',
+    }
+    store.addTask(taskData)
+  }
 }
 
 onMounted(() => {

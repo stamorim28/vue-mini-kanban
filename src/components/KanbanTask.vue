@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { PencilSquareIcon, TrashIcon, XMarkIcon, PlusIcon } from '@heroicons/vue/24/solid'
+import { PencilSquareIcon, TrashIcon, XMarkIcon, MicrophoneIcon } from '@heroicons/vue/24/solid'
 
 const props = defineProps({
   task: {
@@ -18,7 +18,7 @@ const emit = defineEmits(['task-updated', 'task-deleted'])
 const isEditing = ref(false)
 const isDragging = ref(false)
 const showModal = ref(false)
-const modalType = ref('') // 'edit' ou 'delete'
+const modalType = ref('')
 
 const editForm = ref({
   title: '',
@@ -46,6 +46,10 @@ const formattedDate = computed(() => {
   } catch {
     return 'Data desconhecida'
   }
+})
+
+const hasVoiceTranscript = computed(() => {
+  return props.task.voiceTranscript && props.task.voiceTranscript.trim().length > 0
 })
 
 const taskClasses = computed(() => ({
@@ -96,10 +100,6 @@ const cancelEdit = () => {
   closeModal()
 }
 
-const handleDelete = () => {
-  openModal('delete')
-}
-
 const confirmDelete = () => {
   emit('task-deleted', props.task.id)
   closeModal()
@@ -114,7 +114,6 @@ const handleDragStart = (event) => {
   event.dataTransfer.setData('application/json', JSON.stringify(data))
   event.dataTransfer.effectAllowed = 'move'
 
-  // Efeito visual de drag
   setTimeout(() => {
     event.target.style.opacity = '0.4'
   }, 0)
@@ -140,7 +139,6 @@ const closeModal = () => {
   isEditing.value = false
 }
 
-// Título do modal baseado no tipo
 const modalTitle = computed(() => {
   return modalType.value === 'edit' ? 'Editar Tarefa' : 'Confirmar Exclusão'
 })
@@ -178,10 +176,23 @@ const modalTitle = computed(() => {
             {{ formattedDate }}
           </span>
         </div>
+
+        <div v-if="hasVoiceTranscript" class="kanban-task__transcript">
+          <details class="kanban-task__transcript-details">
+            <summary class="kanban-task__transcript-summary">
+              <!-- <span class="kanban-task__transcript-icon">🎤</span> -->
+               <MicrophoneIcon style="height: 16px" />
+              Transcrição de voz
+            </summary>
+            <div class="kanban-task__transcript-content">
+              <i>{{ task.voiceTranscript }}</i>
+
+            </div>
+          </details>
+        </div>
       </div>
     </div>
 
-    <!-- Modal para Editar e Confirmar Exclusão -->
     <div v-if="showModal" class="voice-input__modal">
       <div class="voice-input__modal-content">
         <div class="voice-input__modal-header">
@@ -192,7 +203,6 @@ const modalTitle = computed(() => {
         </div>
 
         <div class="voice-input__modal-body">
-          <!-- Conteúdo do Modal de Edição -->
           <div v-if="modalType === 'edit'">
             <form @submit.prevent="saveEdit">
               <div class="kanban-task__form-group">
@@ -227,7 +237,6 @@ const modalTitle = computed(() => {
             </form>
           </div>
 
-          <!-- Conteúdo do Modal de Confirmação de Exclusão -->
           <div v-if="modalType === 'delete'" class="delete-confirmation">
             <div class="delete-confirmation__icon">
               <TrashIcon style="height: 48px; color: #dc3545" />
@@ -348,6 +357,69 @@ const modalTitle = computed(() => {
     line-height: 1.4;
 
     .dark-mode & {
+      color: #ccc;
+    }
+  }
+
+  &__transcript {
+    margin-top: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+
+    .dark-mode & {
+      border-color: #404040;
+    }
+  }
+
+  &__transcript-details {
+    background: #f8f9fa;
+
+    .dark-mode & {
+      background: #2d2d2d;
+    }
+  }
+
+  &__transcript-summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: #e9ecef;
+    }
+
+    .dark-mode & {
+      color: #fff;
+
+      &:hover {
+        background: #404040;
+      }
+    }
+  }
+
+  &__transcript-icon {
+    font-size: 0.9rem;
+  }
+
+  &__transcript-content {
+    padding: 12px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #495057;
+
+
+
+    .dark-mode & {
+      background: #2d2d2d;
+      border-top-color: #404040;
       color: #ccc;
     }
   }

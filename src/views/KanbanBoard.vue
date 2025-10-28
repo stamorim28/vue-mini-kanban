@@ -49,7 +49,7 @@ onMounted(() => {
       </a>
 
       <div class="kanban-board__controls">
-        <DarkModeToggle v-model="darkMode" />
+        <DarkModeToggle />
         <!-- <div class="kanban-board__stats">
           <span>Progresso: {{ store.progressPercentage || 0 }}%</span>
         </div> -->

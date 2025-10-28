@@ -9,5 +9,5 @@ import KanbanBoard from './views/KanbanBoard.vue'
 </template>
 
 <style lang="scss">
-@import '@/assets/scss/reset.scss';
+@use '@/assets/scss/reset.scss';
 </style>

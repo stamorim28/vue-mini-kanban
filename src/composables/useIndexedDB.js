@@ -21,7 +21,7 @@ const prepareDataForStorage = (data) => {
                 priority: task.priority,
                 columnId: task.columnId,
                 createdAt: task.createdAt,
-                voiceTranscript: task.voiceTranscript || '', // Nova propriedade
+                voiceTranscript: task.voiceTranscript || '',
               }))
             : [],
         }))
@@ -34,7 +34,7 @@ const prepareDataForStorage = (data) => {
           priority: task.priority,
           columnId: task.columnId,
           createdAt: task.createdAt,
-          voiceTranscript: task.voiceTranscript || '', // Nova propriedade
+          voiceTranscript: task.voiceTranscript || '',
         }))
       : [],
     darkMode: Boolean(data.darkMode),

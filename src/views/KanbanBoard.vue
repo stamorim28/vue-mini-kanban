@@ -72,11 +72,6 @@ onMounted(() => {
         @task-deleted="handleTaskDelete"
       />
     </div>
-
-    <div v-if="store.error" class="kanban-board__error">
-      <button @click="store.clearError()">x</button>
-      <span>{{ store.error }}</span>
-    </div>
   </div>
 </template>
 
@@ -147,37 +142,6 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
-  }
-
-  &__error {
-    max-width: 300px;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 15px;
-    background: #ff4757;
-    color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
-    button {
-      width: fit-content;
-      background: transparent;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      align-self: flex-end;
-      margin-bottom: 0.5rem;
-      color: #fff;
-      font-weight: bold;
-      font-size: 1.5rem;
-    }
-
-    span {
-      font-size: 1.125rem;
-    }
   }
 }
 

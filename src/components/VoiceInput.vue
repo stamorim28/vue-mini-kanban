@@ -104,9 +104,7 @@ watch(showModal, (newValue) => {
   <div class="voice-input">
     <button class="voice-input__open-modal-btn" @click="openModal">
       <!-- <span class="voice-input__modal-icon"></span> -->
-      <span class="voice-input__modal-text"
-        ><PlusIcon style="height: 25px" /> Criar tarefa por voz</span
-      >
+      <span class="voice-input__modal-text"><PlusIcon style="height: 25px" /> Criar tarefa</span>
     </button>
 
     <!-- Modal -->

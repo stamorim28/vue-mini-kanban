@@ -192,10 +192,9 @@ const handleTaskDelete = (taskId) => {
 
 @media (max-width: 768px) {
   .kanban-column {
-    padding: 12px;
+    padding: 1rem;
 
     &__header {
-      flex-direction: column;
       gap: 8px;
       text-align: center;
     }

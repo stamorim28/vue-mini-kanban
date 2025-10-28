@@ -49,7 +49,8 @@ onMounted(() => {
       </a>
 
       <div class="kanban-board__controls">
-        <DarkModeToggle />
+        <div class="d-block"><DarkModeToggle /></div>
+
         <!-- <div class="kanban-board__stats">
           <span>Progresso: {{ store.progressPercentage || 0 }}%</span>
         </div> -->
@@ -57,6 +58,7 @@ onMounted(() => {
     </div>
 
     <div class="kanban-board__voice-input">
+      <div class="d-none"><DarkModeToggle /></div>
       <VoiceInput @task-created="handleTaskCreated" />
     </div>
 
@@ -76,6 +78,14 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+.d-none {
+  display: none;
+}
+
+.d-block {
+  display: block;
+}
+
 .kanban-board {
   min-height: 100vh;
   padding: 20px;
@@ -146,12 +156,19 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .d-none {
+    display: block;
+  }
+
+  .d-block {
+    display: none;
+  }
+
   .kanban-board {
-    padding: 10px;
+    padding: 1.5rem;
 
     &__header {
       flex-direction: column;
-      gap: 15px;
       text-align: center;
     }
 
@@ -162,6 +179,12 @@ onMounted(() => {
 
     &__columns {
       grid-template-columns: 1fr;
+    }
+
+    &__voice-input {
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
     }
   }
 }

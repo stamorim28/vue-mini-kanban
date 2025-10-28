@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vue-mini-kanban.vercel.app/sitemap.xml

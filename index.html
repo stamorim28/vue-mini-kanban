@@ -1,13 +1,101 @@
 <!doctype html>
-<html lang="">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ✅ Título Otimizado -->
     <title>Vue Mini Kanban</title>
+
+    <!-- ✅ Meta Description -->
+    <meta
+      name="description"
+      content="Organize suas tarefas com Vue Mini Kanban. Crie cards por comando de voz, arraste e solte tasks entre colunas. Sistema gratuito de gerenciamento de projetos."
+    />
+
+    <!-- ✅ Palavras-chave -->
+    <meta
+      name="keywords"
+      content="kanban, gerenciamento de tarefas, vue.js, reconhecimento de voz, organização, produtividade, tasks, projetos"
+    />
+
+    <!-- ✅ Open Graph (Facebook/LinkedIn) -->
+    <meta property="og:title" content="Vue Mini Kanban" />
+    <meta
+      property="og:description"
+      content="Organize suas tarefas com reconhecimento de voz. Sistema Kanban gratuito para gerenciamento de projetos."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vue-mini-kanban.vercel.app/" />
+    <meta property="og:image" content="/kanban-preview.png" />
+
+    <!-- ✅ Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vue Mini Kanban" />
+    <meta
+      name="twitter:description"
+      content="Crie e organize tarefas por comando de voz com Vue Mini Kanban."
+    />
+    <meta name="twitter:image" content="/kanban-twitter-preview.png" />
+
+    <!-- ✅ Schema.org Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Vue Mini Kanban",
+        "description": "Sistema de gerenciamento de tarefas Kanban com reconhecimento de voz",
+        "url": "https://vue-mini-kanban.vercel.app/",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Seu Nome"
+        }
+      }
+    </script>
+
+    <!-- ✅ Canonical URL -->
+    <link rel="canonical" href="https://vue-mini-kanban.vercel.app/" />
+
+    <!-- ✅ Robots Meta -->
+    <meta name="robots" content="index, follow" />
+
+    <!-- ✅ Theme Color para PWA -->
+    <meta name="theme-color" content="#007bff" />
+
+    <!-- ✅ Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- ✅ Manifest para PWA -->
+    <link rel="manifest" href="/manifest.json" />
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- ✅ Fallback Content para SEO -->
+      <noscript>
+        <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif">
+          <h1>Vue Mini Kanban</h1>
+          <p>Para usar o Vue Mini Kanban, você precisa habilitar o JavaScript em seu navegador.</p>
+          <p>Este é um sistema de gerenciamento de tarefas com Kanban e reconhecimento de voz.</p>
+        </div>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.js"></script>
+
+    <!-- ✅ Google Analytics/GTM (opcional) -->
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'GA_MEASUREMENT_ID');
+    </script> -->
   </body>
 </html>

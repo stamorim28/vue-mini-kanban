@@ -163,7 +163,7 @@ const handleTaskDelete = (taskId) => {
     position: relative;
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
-    max-height: 60dvh;
+    // max-height: 60dvh;
 
     &--drag-over {
       background: rgba(0, 123, 255, 0.05);

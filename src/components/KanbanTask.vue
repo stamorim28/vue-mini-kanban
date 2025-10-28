@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed } from 'vue'
 import {
   PencilSquareIcon,
   TrashIcon,
@@ -37,8 +37,7 @@ const moveForm = ref({
   targetColumnId: '',
 })
 
-// ✅ Obter a lista de colunas disponíveis
-const kanbanStore = inject('kanbanStore') // Ou importe diretamente se preferir
+// ✅ Lista de colunas disponíveis
 const columns = [
   { id: 'todo', title: 'A fazer' },
   { id: 'in-progress', title: 'Em desenvolvimento' },
@@ -83,14 +82,36 @@ const isMoveFormValid = computed(() => {
   return moveForm.value.targetColumnId && moveForm.value.targetColumnId !== props.columnId
 })
 
+// ✅ Prevenir eventos de touch no container principal
+const handleTouchStart = (event) => {
+  // Se o toque foi em um botão, não faz nada (deixa o clique funcionar)
+  if (event.target.closest('.kanban-task__actions') || event.target.closest('button')) {
+    return
+  }
+
+  // Se foi em outra parte do card, previne o comportamento padrão
+  // mas permite que os botões ainda funcionem
+  event.stopPropagation()
+}
+
+const handleTouchMove = (event) => {
+  // Permite scroll natural se não estiver em um botão
+  if (!event.target.closest('.kanban-task__actions') && !event.target.closest('button')) {
+    return
+  }
+  event.preventDefault()
+}
+
 // ✅ Abrir modal de mover tarefa
-const openMoveModal = () => {
+const openMoveModal = (event) => {
+  event.stopPropagation()
   modalType.value = 'move'
-  moveForm.value.targetColumnId = '' // Resetar seleção
+  moveForm.value.targetColumnId = ''
   showModal.value = true
 }
 
-const toggleEdit = () => {
+const toggleEdit = (event) => {
+  event?.stopPropagation()
   if (!isEditing.value) {
     editForm.value = {
       title: props.task.title,
@@ -147,8 +168,14 @@ const confirmDelete = () => {
   closeModal()
 }
 
-// Handlers de drag (mantidos para desktop)
+// Handlers de drag para desktop
 const handleDragStart = (event) => {
+  // ✅ Não inicia drag se foi clicado em um botão
+  if (event.target.closest('.kanban-task__actions') || event.target.closest('button')) {
+    event.preventDefault()
+    return
+  }
+
   isDragging.value = true
 
   if (event.dataTransfer) {
@@ -161,21 +188,22 @@ const handleDragStart = (event) => {
   }
 
   setTimeout(() => {
-    event.target.style.opacity = '0.4'
+    if (event.target) event.target.style.opacity = '0.4'
   }, 0)
 }
 
 const handleDragEnd = (event) => {
   isDragging.value = false
-  event.target.style.opacity = '1'
+  if (event.target) event.target.style.opacity = '1'
 }
 
-const openModal = (type) => {
+const openModal = (type, event) => {
+  event?.stopPropagation()
   modalType.value = type
   showModal.value = true
 
   if (type === 'edit') {
-    toggleEdit()
+    toggleEdit(event)
   }
 }
 
@@ -209,17 +237,34 @@ const currentColumnName = computed(() => {
       draggable="true"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
     >
       <div class="kanban-task__header">
         <div class="kanban-task__title" v-html="task.title"></div>
         <div class="kanban-task__actions">
-          <button class="kanban-task__move" @click="openMoveModal" title="Mover Tarefa">
+          <button
+            class="kanban-task__move"
+            @click="openMoveModal($event)"
+            @touchstart="openMoveModal($event)"
+            title="Mover Tarefa"
+          >
             <ArrowsUpDownIcon style="height: 20px" />
           </button>
-          <button class="kanban-task__edit" @click="openModal('edit')" title="Editar">
+          <button
+            class="kanban-task__edit"
+            @click="openModal('edit', $event)"
+            @touchstart="openModal('edit', $event)"
+            title="Editar"
+          >
             <PencilSquareIcon style="height: 20px" />
           </button>
-          <button class="kanban-task__delete" @click="openModal('delete')" title="Deletar">
+          <button
+            class="kanban-task__delete"
+            @click="openModal('delete', $event)"
+            @touchstart="openModal('delete', $event)"
+            title="Deletar"
+          >
             <TrashIcon style="height: 20px" />
           </button>
         </div>
@@ -321,13 +366,14 @@ const currentColumnName = computed(() => {
             </div>
             <div class="move-confirmation__message">
               <p>Mover tarefa <strong v-html="task.title"></strong> para:</p>
-              <!-- <p class="move-confirmation__current">
+              <p class="move-confirmation__current">
                 Atualmente em: <strong>{{ currentColumnName }}</strong>
-              </p> -->
+              </p>
             </div>
 
             <div class="move-confirmation__form">
               <div class="kanban-task__form-group">
+                <label>Selecionar Coluna:</label>
                 <select v-model="moveForm.targetColumnId" class="kanban-task__select">
                   <option value="" disabled>Selecione uma coluna</option>
                   <option
@@ -370,7 +416,7 @@ const currentColumnName = computed(() => {
   transition: all 0.2s ease;
   position: relative;
   -webkit-tap-highlight-color: transparent;
-  touch-action: pan-y;
+  touch-action: pan-y; /* ✅ Permite scroll vertical */
   user-select: none;
 
   .dark-mode & {
@@ -384,10 +430,8 @@ const currentColumnName = computed(() => {
   }
 
   &--dragging {
-    opacity: 0.4;
-    transform: scale(0.95) rotate(3deg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    opacity: 0.5;
+    transform: rotate(5deg);
   }
 
   &--high {
@@ -421,12 +465,26 @@ const currentColumnName = computed(() => {
   &__actions {
     display: flex;
     gap: 4px;
-    opacity: 0;
+    opacity: 1; /* ✅ Sempre visível no mobile */
     transition: opacity 0.2s ease;
+
+    /* ✅ Garante que os botões sejam clicáveis */
+    position: relative;
+    z-index: 10;
   }
 
   &:hover &__actions {
     opacity: 1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &__actions {
+      opacity: 0;
+    }
+
+    &:hover &__actions {
+      opacity: 1;
+    }
   }
 
   &__move,
@@ -435,10 +493,22 @@ const currentColumnName = computed(() => {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
-    border-radius: 3px;
+    padding: 6px; /* ✅ Área de toque maior */
+    border-radius: 4px;
     font-size: 0.875rem;
     color: #666;
+
+    /* ✅ Melhora a acessibilidade no mobile */
+    min-width: 32px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* ✅ Garante que seja clicável */
+    position: relative;
+    z-index: 20;
+    touch-action: manipulation;
 
     &:hover {
       background: rgba(0, 0, 0, 0.1);
@@ -876,7 +946,16 @@ const currentColumnName = computed(() => {
     padding: 10px;
 
     &__actions {
-      opacity: 1;
+      opacity: 1; /* ✅ Sempre visível no mobile */
+      gap: 6px; /* ✅ Mais espaçamento entre botões */
+    }
+
+    &__move,
+    &__edit,
+    &__delete {
+      padding: 8px; /* ✅ Área de toque ainda maior no mobile */
+      min-width: 36px;
+      min-height: 36px;
     }
   }
 

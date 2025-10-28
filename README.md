@@ -20,7 +20,7 @@ Confira também o [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api)
 ## 🛠 Tecnologias
 
 ### Core
-- **Vue.js 3.5.22** - Framework principal
+- **Vue.js 3.5** - Framework principal
 - **Pinia** - Gerenciamento de estado
 - **Vite** - Build tool e dev server
 

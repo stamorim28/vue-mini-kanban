@@ -40,6 +40,7 @@ export default {
         priority: taskData.priority || 'medium',
         columnId: taskData.columnId || 'todo',
         createdAt: new Date().toISOString(),
+        voiceTranscript: taskData.voiceTranscript || '', // Nova propriedade
       }
 
       console.log('➕ Nova task:', newTask)
@@ -261,7 +262,7 @@ export default {
       })
 
       console.log('✅ Task deletada e salva com sucesso!')
-      toast.success('Tarefa deletada e salva com sucesso!', {
+      toast.success('Tarefa deletada com sucesso!', {
         position: toast.POSITION.TOP_RIGHT,
         theme: 'colored',
         autoClose: 5000,

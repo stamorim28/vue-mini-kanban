@@ -93,7 +93,12 @@ export function useVoiceRecognition() {
       transcript.value = data.transcript || ''
       console.log('🧠 Transcrição:', transcript.value)
       console.log('📦 Tarefa gerada:', data.task)
-      return data.task
+
+      // Retorna tanto a tarefa quanto a transcrição
+      return {
+        task: data.task,
+        transcript: transcript.value,
+      }
     } catch (err) {
       console.error('Erro ao gerar tarefa via backend:', err)
       alert('Erro ao gerar a tarefa via backend.')

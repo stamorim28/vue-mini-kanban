@@ -13,7 +13,6 @@ const prepareDataForStorage = (data) => {
           id: column.id,
           title: column.title,
           taskIds: Array.isArray(column.taskIds) ? [...column.taskIds] : [],
-
           tasks: Array.isArray(column.tasks)
             ? column.tasks.map((task) => ({
                 id: task.id,
@@ -22,6 +21,7 @@ const prepareDataForStorage = (data) => {
                 priority: task.priority,
                 columnId: task.columnId,
                 createdAt: task.createdAt,
+                voiceTranscript: task.voiceTranscript || '', // Nova propriedade
               }))
             : [],
         }))
@@ -34,6 +34,7 @@ const prepareDataForStorage = (data) => {
           priority: task.priority,
           columnId: task.columnId,
           createdAt: task.createdAt,
+          voiceTranscript: task.voiceTranscript || '', // Nova propriedade
         }))
       : [],
     darkMode: Boolean(data.darkMode),

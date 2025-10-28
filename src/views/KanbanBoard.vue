@@ -34,7 +34,14 @@ onMounted(() => {
 <template>
   <div class="kanban-board" :class="{ 'dark-mode': store.darkMode }">
     <div class="kanban-board__header">
-      <h1 class="kanban-board__title">Vue Mini Kanban</h1>
+      <a
+        href="https://github.com/stamorim28/vue-mini-kanban/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <h1 class="kanban-board__title">Vue Mini Kanban</h1>
+      </a>
+
       <div class="kanban-board__controls">
         <DarkModeToggle v-model="darkMode" />
         <!-- <div class="kanban-board__stats">
@@ -89,8 +96,17 @@ onMounted(() => {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
+    a {
+      text-decoration: none;
+      color: #000;
+    }
+
     .dark-mode & {
       background: #2d2d2d;
+
+      a {
+        color: #fff;
+      }
     }
   }
 

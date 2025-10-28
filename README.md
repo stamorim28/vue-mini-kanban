@@ -12,7 +12,7 @@ Confira também o [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api)
 ## 🚀 Funcionalidades
 
 - **🎯 Interface Kanban Completa** - Três colunas (A fazer, Em desenvolvimento, Concluído)
-- **🎤 Criação de Tarefas por Voz** - Integração com APIs de transcrição de voz
+- **🎤 Criação de Tarefas por Voz** - Integração com APIs de transcrição de voz (Whisper)
 - **💾 Persistência Local** - Armazenamento com IndexedDB
 - **📱 Design Responsivo** - Interface adaptável para todos os dispositivos
 - **🧪 Testes Abrangentes** - Unitários (Vitest) e E2E (Cypress)
@@ -28,6 +28,7 @@ Confira também o [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api)
 - **SASS/SCSS** - Pré-processador CSS
 - **Metodologia BEM** - Organização de classes CSS
 - **Design Responsivo** - Mobile-first approach
+- **Heroicons** - Biblioteca de ícones
 
 ### Testes
 - **Vitest** - Testes unitários e de integração
@@ -36,8 +37,6 @@ Confira também o [node-my-ai-api](https://github.com/stamorim28/node-my-ai-api)
 ### Funcionalidades Avançadas
 - **Web Audio API** - Captura e processamento de áudio
 - **IndexedDB** - Persistência de dados local
-- **Heroicons** - Biblioteca de ícones
-
 
 ## ⚙️ Como Executar
 

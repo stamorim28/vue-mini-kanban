@@ -1,58 +1,58 @@
-# Vue Mini Kanban ([com GPT-5-Nano do node-voice-task-api](https://github.com/stamorim28/node-voice-task-api))
+# Vue Mini Kanban ([powered by GPT-5-Nano via node-voice-task-api](https://github.com/stamorim28/node-voice-task-api))
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5.22-brightgreen.svg)](https://vuejs.org/)
 [![Vitest](https://img.shields.io/badge/Testing-Vitest-blue.svg)](https://vitest.dev/)
 [![Cypress](https://img.shields.io/badge/E2E-Cypress-green.svg)](https://www.cypress.io/)
 [![Pinia](https://img.shields.io/badge/State%20Management-Pinia-orange.svg)](https://pinia.vuejs.org/)
 
-Um aplicativo Kanban em que o usuário pode criar tasks com auxílio gpt-5-nano por comando de voz.
+A Kanban app where users create tasks by voice, assisted by GPT-5-nano.
 
-Confira também o [node-voice-task-api](https://github.com/stamorim28/node-voice-task-api), o repositório da API usada no projeto.
+Check out [node-voice-task-api](https://github.com/stamorim28/node-voice-task-api), the API used by this project.
 
-## 🚀 Funcionalidades
+## 🚀 Features
 
-- **🎯 Interface Kanban Completa** - Três colunas (A fazer, Em desenvolvimento, Concluído)
-- **🎤 Criação de Tarefas por Voz** - Integração com APIs de transcrição de voz (Whisper)
-- **💾 Persistência Local** - Armazenamento com IndexedDB
-- **📱 Design Responsivo** - Interface adaptável para todos os dispositivos
-- **🧪 Testes Abrangentes** - Unitários (Vitest) e E2E (Cypress)
+- **🎯 Complete Kanban Interface** - Three columns (To Do, In Progress, Done)
+- **🎤 Voice Task Creation** - Integration with speech transcription APIs (Whisper)
+- **💾 Local Persistence** - Storage with IndexedDB
+- **📱 Responsive Design** - Adaptable interface for all devices
+- **🧪 Comprehensive Testing** - Unit (Vitest) and E2E (Cypress)
 
-## 🛠 Tecnologias
+## 🛠 Tech Stack
 
 ### Core
-- **Vue.js 3.5** - Framework principal
-- **Pinia** - Gerenciamento de estado
-- **Vite** - Build tool e dev server
+- **Vue.js 3.5** - Main framework
+- **Pinia** - State management
+- **Vite** - Build tool and dev server
 
-### Estilização
-- **SASS/SCSS** - Pré-processador CSS
-- **Metodologia BEM** - Organização de classes CSS
-- **Design Responsivo** - Mobile-first approach
-- **Heroicons** - Biblioteca de ícones
+### Styling
+- **SASS/SCSS** - CSS pre-processor
+- **BEM Methodology** - CSS class organization
+- **Responsive Design** - Mobile-first approach
+- **Heroicons** - Icon library
 
-### Testes
-- **Vitest** - Testes unitários e de integração
-- **Cypress** - Testes end-to-end
+### Testing
+- **Vitest** - Unit and integration tests
+- **Cypress** - End-to-end tests
 
-### Funcionalidades Avançadas
-- **Web Audio API** - Captura e processamento de áudio
-- **IndexedDB** - Persistência de dados local
+### Advanced Features
+- **Web Audio API** - Audio capture and processing
+- **IndexedDB** - Local data persistence
 
-## ⚙️ Como Executar
+## ⚙️ How to Run
 
-### Desenvolvimento
+### Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-### Testes Unitários (Vitest)
+### Unit Tests (Vitest)
 ```bash
 npm run test:unit
 ```
 
-### Testes E2E (Cypress)
+### E2E Tests (Cypress)
 ```bash
 npm run preview
 npx cypress run --e2e --spec "cypress/e2e"
